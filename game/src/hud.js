@@ -1,168 +1,209 @@
-// hud.js - HUD: score, tide, held item, help
+// hud.js - score, tide, held item and help text, all inside the reserved bottom band.
+import { HUD } from './layout.js';
 import { INGREDIENTS } from './recipes.js';
 import { drawFoodItem } from './drawFood.js';
-import { C } from './drawKitchen.js';
 import { drawTickets } from './drawTickets.js';
 import { drawClock } from './drawClock.js';
 import { drawResult } from './drawResult.js';
 
-// Rounded rect polyfill
-function rrect(ctx, x, y, w, h, r) {
-  r = Math.min(r, w/2, h/2);
+function panel(ctx, b) {
+  ctx.fillStyle = 'rgba(14,20,28,0.82)';
   ctx.beginPath();
-  ctx.moveTo(x+r, y);
-  ctx.lineTo(x+w-r, y);
-  ctx.quadraticCurveTo(x+w, y, x+w, y+r);
-  ctx.lineTo(x+w, y+h-r);
-  ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-  ctx.lineTo(x+r, y+h);
-  ctx.quadraticCurveTo(x, y+h, x, y+h-r);
-  ctx.lineTo(x, y+r);
-  ctx.quadraticCurveTo(x, y, x+r, y);
-  ctx.closePath();
+  if (ctx.roundRect) ctx.roundRect(b.x, b.y, b.w, b.h, 12);
+  else ctx.rect(b.x, b.y, b.w, b.h);
+  ctx.fill();
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = 'rgba(255,180,80,0.5)';
+  ctx.stroke();
 }
 
-export function drawHUD(ctx, W, H, state) {
-  // Draw order tickets at top
-  drawTickets(ctx, W, H, state);
-  // Draw lantern clock at top center
-  drawClock(ctx, W, H, state);
-  // Score panel top-left (below clock area)
-  drawScorePanel(ctx, state);
-  // Tide gauge right of center
-  drawTideGauge(ctx, W, state);
-  // Held item indicator bottom-left
-  drawHeldItem(ctx, state);
-  // Help text bottom center
-  drawHelpText(ctx, W, H, state);
-  // Combo indicator
-  if ((state.combo||0) > 1) drawCombo(ctx, W, H, state);
+export function drawHUD(ctx, state) {
+  drawTickets(ctx, state);
+  drawClock(ctx, state);
+  score(ctx, state);
+  tide(ctx, state);
+  held(ctx, state);
+  help(ctx, state);
+  if ((state.combo || 0) > 1) combo(ctx, state);
 }
 
-function drawScorePanel(ctx, state) {
-  const x=10, y=100, w=170, h=80;
-  ctx.fillStyle='rgba(20,12,5,0.75)';
-  rrect(ctx,x,y,w,h,8); ctx.fill();
-  ctx.strokeStyle='#7a5030'; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle='#ffd27d'; ctx.font='bold 11px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='top';
-  ctx.fillText('SCORE',x+10,y+8);
-  ctx.fillStyle='#ffd700'; ctx.font='bold 24px sans-serif'; ctx.fillText(String(state.score||0).padStart(6,'0'),x+10,y+26);
-  ctx.fillStyle='#a08050'; ctx.font='11px sans-serif';
-  ctx.fillText(`Shift ${state.currentShift}/5`,x+10,y+60);
-  ctx.fillStyle='#88aa66'; ctx.fillText(`+${state.shiftScore||0}`,x+100,y+60);
+function score(ctx, state) {
+  const b = HUD.score;
+  panel(ctx, b);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#c8a878';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('SCORE', b.x + 16, b.y + 10);
+  ctx.fillStyle = '#ffd76a';
+  ctx.font = 'bold 34px sans-serif';
+  ctx.fillText(String(state.score || 0).padStart(5, '0'), b.x + 16, b.y + 30);
+  ctx.fillStyle = '#9ec48a';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('shift +' + (state.shiftScore || 0), b.x + 150, b.y + 46);
 }
 
-function drawTideGauge(ctx, W, state) {
-  const tide=state.tide;
-  if(!tide) return;
-  const tx=W-160, ty=12, tw=140, th=76;
-  ctx.fillStyle='rgba(20,12,5,0.7)';
-  rrect(ctx,tx,ty,tw,th,6); ctx.fill();
-  ctx.strokeStyle='#4a6a80'; ctx.lineWidth=1.5; ctx.stroke();
-  // Tide level bar
-  const barX=tx+8, barY=ty+8, barW=12, barH=50;
-  ctx.fillStyle='#0a1a24'; ctx.fillRect(barX,barY,barW,barH);
-  const level=tide.level;
-  ctx.fillStyle=level>0.6?'#4488aa':level<0.4?'#884422':'#446688';
-  ctx.fillRect(barX,barY+barH*(1-level),barW,barH*level);
-  // Label
-  ctx.fillStyle='#ffd27d'; ctx.font='bold 10px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='top';
-  ctx.fillText('TIDE',tx+26,ty+8);
-  ctx.fillStyle=level>0.6?'#88bbdd':level<0.4?'#dd8844':'#88aacc';
-  ctx.font='bold 12px sans-serif';
-  ctx.fillText(level>0.6?'HIGH':level<0.4?'LOW':'MID',tx+26,ty+22);
-  // Route indicator
-  ctx.fillStyle='#a08050'; ctx.font='10px sans-serif';
-  ctx.fillText(level>0.6?'Bridge drifting':level<0.4?'Plank OK':'Bridge normal',tx+8,ty+58);
+function tide(ctx, state) {
+  const b = HUD.tide;
+  const t = state.tide;
+  panel(ctx, b);
+  const level = t ? t.level : 0.5;
+  const label = level > 0.6 ? 'HIGH' : level < 0.4 ? 'LOW' : 'MID';
+  const col = level > 0.6 ? '#7fc4e8' : level < 0.4 ? '#f0a860' : '#9ab8d0';
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#c8a878';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('TIDE', b.x + 62, b.y + 10);
+  ctx.fillStyle = col;
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText(label, b.x + 62, b.y + 30);
+  // Gauge
+  const gx = b.x + 16, gy = b.y + 14, gw = 34, gh = 52;
+  ctx.fillStyle = '#0a141c';
+  ctx.fillRect(gx, gy, gw, gh);
+  ctx.fillStyle = col;
+  ctx.fillRect(gx, gy + gh * (1 - level), gw, gh * level);
+  ctx.strokeStyle = 'rgba(255,200,120,0.6)';
+  ctx.lineWidth = 2;
+  ctx.strokeRect(gx, gy, gw, gh);
+  ctx.fillStyle = '#a89070';
+  ctx.font = '16px sans-serif';
+  ctx.fillText(level > 0.6 ? 'bridge drifts' : level < 0.4 ? 'plank is out' : 'bridge steady', b.x + 62, b.y + 58);
 }
 
-function drawHeldItem(ctx, state) {
-  const player=state.player;
-  if(!player||!player.carrying) return;
-  const item=player.carrying;
-  const ix=20, iy=H-90;
-  ctx.fillStyle='rgba(20,12,5,0.8)';
-  rrect(ctx,ix,iy,120,75,8); ctx.fill();
-  ctx.strokeStyle='#7a5030'; ctx.lineWidth=1.5; ctx.stroke();
-  ctx.fillStyle='#a08050'; ctx.font='10px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='top';
-  const info=INGREDIENTS[item.ing];
-  ctx.fillText(info?info.name:item.ing,ix+60,iy+6);
-  // Item icon
-  const ic=item.state==='burned'?'#333':item.state==='fried'?'#c8860a':item.state==='steamed'?'#e8c8d0':'#ffd080';
-  ctx.fillStyle=ic;
-  ctx.beginPath(); ctx.arc(ix+60,iy+40,28,0,Math.PI*2); ctx.fill();
-  ctx.strokeStyle='#7a5030'; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle='#a08050'; ctx.font='9px sans-serif';
-  ctx.fillText(item.state.toUpperCase(),ix+60,iy+70);
+function held(ctx, state) {
+  const p = state.player;
+  const b = HUD.held;
+  panel(ctx, b);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'top';
+  ctx.fillStyle = '#c8a878';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('CARRYING', b.x + b.w / 2, b.y + 8);
+  if (!p || !p.carrying) {
+    ctx.fillStyle = 'rgba(200,168,120,0.6)';
+    ctx.font = '18px sans-serif';
+    ctx.fillText('nothing', b.x + b.w / 2, b.y + 44);
+    return;
+  }
+  const info = INGREDIENTS[p.carrying.ing];
+  drawFoodItem(ctx, b.x + 40, b.y + 44, p.carrying.ing, p.carrying.state, 64);
+  ctx.textAlign = 'left';
+  ctx.fillStyle = '#ffe6b0';
+  ctx.font = 'bold 17px sans-serif';
+  ctx.fillText(info ? info.name : p.carrying.ing, b.x + 78, b.y + 26);
+  ctx.fillStyle = '#c8a878';
+  ctx.font = '16px sans-serif';
+  ctx.fillText(p.carrying.state, b.x + 78, b.y + 50);
 }
 
-function drawHelpText(ctx, W, H, state) {
-  if(state.screen!=='play') return;
-  ctx.fillStyle='rgba(20,12,5,0.6)';
-  ctx.fillRect(W/2-170,H-26,340,22);
-  ctx.fillStyle='#a08050'; ctx.font='11px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('WASD move  |  Click station  |  E interact  |  P pause',W/2,H-15);
+function help(ctx, state) {
+  const b = HUD.help;
+  panel(ctx, b);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#d8c09a';
+  ctx.font = '17px sans-serif';
+  ctx.fillText('WASD / arrows  move     E  use station     click  walk & use     P  pause', b.x + b.w / 2, b.y + 26);
+  ctx.fillStyle = '#a89070';
+  ctx.font = '16px sans-serif';
+  ctx.fillText('crate → chop → pan or steamer → plate → serve hatch', b.x + b.w / 2, b.y + 56);
 }
 
-function drawCombo(ctx, W, H, state) {
-  const c=state.combo||0;
-  if(c<2) return;
-  ctx.fillStyle='rgba(20,12,5,0.7)';
-  rrect(ctx,W/2-60,H/2-40,120,50,10); ctx.fill();
-  ctx.strokeStyle='#ff8c20'; ctx.lineWidth=2; ctx.stroke();
-  ctx.fillStyle='#ff8c20'; ctx.font='bold 22px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(`x${c} COMBO!`,W/2,H/2-15);
+function combo(ctx, state) {
+  const b = HUD.help;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,150,40,0.95)';
+  ctx.font = 'bold 26px sans-serif';
+  ctx.fillText('x' + state.combo + ' COMBO', b.x + b.w / 2, b.y - 22);
 }
 
-// Screen overlays
-export function drawTitleScreen(ctx,W,H){
-  const bg=ctx.createLinearGradient(0,0,0,H);
-  bg.addColorStop(0,'#020a18'); bg.addColorStop(1,'#0a1520');
-  ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
-  const glow=ctx.createRadialGradient(W/2,H*0.3,0,W/2,H*0.3,280);
-  glow.addColorStop(0,'rgba(255,140,32,0.15)'); glow.addColorStop(1,'transparent');
-  ctx.fillStyle=glow; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#ffd27d'; ctx.font='bold 52px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('LANTERN TIDE',W/2,H*0.28);
-  ctx.fillStyle='#ff8c20'; ctx.font='18px sans-serif';
-  ctx.fillText('A Night Kitchen on the Floating Market',W/2,H*0.37);
-  ctx.fillStyle='#a08050'; ctx.font='15px sans-serif';
-  const lines=['WASD / ARROWS — Move','E — Interact with stations','Click — Walk to station',
-               'Collect ingredients, cook, plate, and serve!','Watch the tide — plan your route!','','Press ENTER or click to start'];
-  lines.forEach((l,i)=>{
-    ctx.fillStyle=l.startsWith('WASD')||l.startsWith('E —')||l.startsWith('Collect')||l.startsWith('Watch')?'#c0a070':'#ffd27d';
-    ctx.fillText(l,W/2,H*0.52+i*30);
+export function drawTitleScreen(ctx) {
+  const W = 1280, H = 800;
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, '#02060f');
+  g.addColorStop(1, '#0b1a26');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, W, H);
+  const glow = ctx.createRadialGradient(W / 2, 300, 20, W / 2, 300, 420);
+  glow.addColorStop(0, 'rgba(255,150,50,0.2)');
+  glow.addColorStop(1, 'rgba(255,150,50,0)');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffd68a';
+  ctx.font = 'bold 64px sans-serif';
+  ctx.fillText('LANTERN TIDE', W / 2, 240);
+  ctx.fillStyle = '#ff9c30';
+  ctx.font = '24px sans-serif';
+  ctx.fillText('a night kitchen on the floating market', W / 2, 300);
+  const lines = [
+    'WASD or arrows — walk the two piers',
+    'E — use the station you are standing at',
+    'click a station — walk there and use it',
+    'crate → chop → pan or steamer → plate → serve',
+    'the tide decides which crossing is open',
+    '',
+    'press ENTER or click to open the kitchen',
+  ];
+  ctx.font = '20px sans-serif';
+  lines.forEach((l, i) => {
+    ctx.fillStyle = i >= 5 ? '#ffe6b0' : '#c8b090';
+    ctx.fillText(l, W / 2, 400 + i * 38);
   });
 }
 
-export function drawPauseScreen(ctx,W,H){
-  ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#ffd27d'; ctx.font='bold 36px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('PAUSED',W/2,H*0.45);
-  ctx.fillStyle='#a08050'; ctx.font='14px sans-serif';
-  ctx.fillText('Press P or ESC to resume',W/2,H*0.56);
+export function drawPauseScreen(ctx) {
+  const W = 1280, H = 800;
+  ctx.fillStyle = 'rgba(4,8,14,0.6)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffd68a';
+  ctx.font = 'bold 46px sans-serif';
+  ctx.fillText('PAUSED', W / 2, H / 2 - 20);
+  ctx.fillStyle = '#c8a878';
+  ctx.font = '20px sans-serif';
+  ctx.fillText('press P or ESC to keep cooking', W / 2, H / 2 + 40);
 }
 
-export function drawShiftResult(ctx,W,H,state){ drawResult(ctx,W,H,state); }
-
-export function drawWinScreen(ctx,W,H,state){
-  ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#ffd700'; ctx.font='bold 44px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('SHIFTS COMPLETE!',W/2,H*0.3);
-  ctx.fillStyle='#ffd27d'; ctx.font='22px sans-serif';
-  ctx.fillText('Final Score: '+(state.score||0),W/2,H*0.45);
-  ctx.fillStyle='#44cc66'; ctx.font='16px sans-serif';
-  ctx.fillText('You conquered the Lantern Tide!',W/2,H*0.55);
-  ctx.fillStyle='#a08050'; ctx.font='14px sans-serif';
-  ctx.fillText('Press ENTER to play again',W/2,H*0.68);
+export function drawShiftResult(ctx, state) {
+  drawResult(ctx, state);
 }
 
-export function drawLoseScreen(ctx,W,H,state){
-  ctx.fillStyle='rgba(0,0,0,0.8)'; ctx.fillRect(0,0,W,H);
-  ctx.fillStyle='#ff4444'; ctx.font='bold 38px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText('GAME OVER',W/2,H*0.3);
-  ctx.fillStyle='#ffd27d'; ctx.font='20px sans-serif';
-  ctx.fillText('Score: '+(state.score||0),W/2,H*0.45);
-  ctx.fillStyle='#a08050'; ctx.font='14px sans-serif';
-  ctx.fillText('Press ENTER to try again',W/2,H*0.6);
+export function drawWinScreen(ctx, state) {
+  const W = 1280, H = 800;
+  ctx.fillStyle = 'rgba(4,8,14,0.72)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ffd24a';
+  ctx.font = 'bold 56px sans-serif';
+  ctx.fillText('ALL SHIFTS CLEARED', W / 2, H / 2 - 70);
+  ctx.fillStyle = '#ffe6b0';
+  ctx.font = '28px sans-serif';
+  ctx.fillText('final score ' + (state.score || 0), W / 2, H / 2);
+  ctx.fillStyle = '#c8a878';
+  ctx.font = '20px sans-serif';
+  ctx.fillText('press ENTER to open a new night', W / 2, H / 2 + 70);
+}
+
+export function drawLoseScreen(ctx, state) {
+  const W = 1280, H = 800;
+  ctx.fillStyle = 'rgba(10,4,4,0.75)';
+  ctx.fillRect(0, 0, W, H);
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillStyle = '#ff7a6a';
+  ctx.font = 'bold 52px sans-serif';
+  ctx.fillText('THE RAFT CLOSES', W / 2, H / 2 - 60);
+  ctx.fillStyle = '#ffe6b0';
+  ctx.font = '26px sans-serif';
+  ctx.fillText('score ' + (state.score || 0), W / 2, H / 2 + 10);
+  ctx.fillStyle = '#c8a878';
+  ctx.font = '20px sans-serif';
+  ctx.fillText('press ENTER to try the night again', W / 2, H / 2 + 70);
 }

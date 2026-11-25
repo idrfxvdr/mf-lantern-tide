@@ -1,55 +1,47 @@
-// Player: position, movement, carrying state
+// player.js - the cook's position, walk-to-target and carried ingredient.
 import * as Audio from './audio.js';
 
-export const PLAYER_SPEED = 140; // pixels per second
+export const PLAYER_SPEED = 320;
 
 export class Player {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.targetX = x;
-    this.targetY = y;
-    this.carrying = null; // { ing, state, stepIdx, recipeId }
-    this.carryCount = 0;
-    this.walkToStation = null;
-    this.bobOffset = 0;
+    this.walkTo = null;
+    this.carrying = null;
+    this.facing = 1;
     this.bobTime = 0;
-    this.facing = 1; // 1=right, -1=left
   }
 
   update(dt) {
-    this.bobTime += dt * 8;
-    this.bobOffset = Math.sin(this.bobTime) * 2;
-
-    if (this.walkToStation) {
-      const dx = this.walkToStation.x - this.x;
-      const dy = this.walkToStation.y - this.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-      if (dist < 5) {
-        this.x = this.walkToStation.x;
-        this.y = this.walkToStation.y;
-        this.walkToStation = null;
-      } else {
-        const spd = PLAYER_SPEED * dt;
-        this.x += (dx / dist) * Math.min(spd, dist);
-        this.y += (dy / dist) * Math.min(spd, dist);
-        if (dx !== 0) this.facing = dx > 0 ? 1 : -1;
-      }
+    this.bobTime += dt * 9;
+    if (!this.walkTo) return;
+    const dx = this.walkTo.x - this.x;
+    const dy = this.walkTo.y - this.y;
+    const dist = Math.hypot(dx, dy);
+    if (dist < 6) {
+      this.x = this.walkTo.x;
+      this.y = this.walkTo.y;
+      this.walkTo = null;
+      return;
     }
+    const step = Math.min(PLAYER_SPEED * dt, dist);
+    this.x += (dx / dist) * step;
+    this.y += (dy / dist) * step;
+    if (Math.abs(dx) > 2) this.facing = dx > 0 ? 1 : -1;
   }
 
-  walkTo(station) {
-    this.walkToStation = station;
+  goTo(point) {
+    this.walkTo = { x: point.x, y: point.y };
   }
 
   isMoving() {
-    return this.walkToStation !== null;
+    return this.walkTo !== null;
   }
 
   pickup(item) {
     if (this.carrying) return false;
     this.carrying = item;
-    this.carryCount++;
     Audio.playPickup();
     return true;
   }
@@ -68,6 +60,11 @@ export class Player {
     return item;
   }
 
-  getX() { return this.x; }
-  getY() { return this.y + this.bobOffset; }
+  getX() {
+    return this.x;
+  }
+
+  getY() {
+    return this.y;
+  }
 }

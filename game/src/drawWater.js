@@ -1,103 +1,95 @@
-// drawWater.js - Water layer: sky, moon, stars, water ripples, reflections
-export function drawWater(ctx, W, H, state) {
-  const time = state.time || 0;
-  // Sky gradient
-  const sky = ctx.createLinearGradient(0, 0, 0, H * 0.55);
-  sky.addColorStop(0, '#020a18');
-  sky.addColorStop(0.5, '#060f1e');
-  sky.addColorStop(1, '#0d1e2e');
-  ctx.fillStyle = sky;
-  ctx.fillRect(0, 0, W, H * 0.55);
+// drawWater.js - sky, moon, stars, far shore, water, reflections.
+import { W, H, CHANNEL } from './layout.js';
 
-  // Moon glow
-  const mx = W * 0.72, my = 80;
-  const mg = ctx.createRadialGradient(mx, my, 5, mx, my, 160);
-  mg.addColorStop(0, 'rgba(255,248,200,0.18)');
-  mg.addColorStop(0.5, 'rgba(255,220,120,0.05)');
-  mg.addColorStop(1, 'transparent');
-  ctx.fillStyle = mg; ctx.fillRect(mx - 160, my - 160, 320, 320);
-  ctx.fillStyle = '#ffe8a0';
-  ctx.beginPath(); ctx.arc(mx, my, 32, 0, Math.PI * 2); ctx.fill();
-  ctx.fillStyle = 'rgba(200,160,80,0.25)';
-  ctx.beginPath(); ctx.arc(mx - 10, my - 6, 7, 0, Math.PI * 2); ctx.fill();
-  ctx.beginPath(); ctx.arc(mx + 12, my + 10, 5, 0, Math.PI * 2); ctx.fill();
+export function drawWater(ctx, state) {
+  const t = state.time || 0;
+
+  // Sky
+  const sky = ctx.createLinearGradient(0, 0, 0, CHANNEL.waterY);
+  sky.addColorStop(0, '#02060f');
+  sky.addColorStop(0.55, '#071120');
+  sky.addColorStop(1, '#0d1e2c');
+  ctx.fillStyle = sky;
+  ctx.fillRect(0, 0, W, CHANNEL.waterY);
 
   // Stars
-  ctx.fillStyle = 'rgba(255,255,220,0.7)';
   const rng = state.bgRng;
-  for (let i = 0; i < 60; i++) {
-    const sx = rng() * W, sy = rng() * H * 0.32;
-    const ss = rng() * 1.5 + 0.4, sa = 0.3 + rng() * 0.7;
-    ctx.globalAlpha = sa;
-    ctx.beginPath(); ctx.arc(sx, sy, ss, 0, Math.PI * 2); ctx.fill();
+  for (let i = 0; i < 70; i++) {
+    const sx = rng() * W;
+    const sy = rng() * 260;
+    ctx.globalAlpha = 0.25 + rng() * 0.6;
+    ctx.fillStyle = '#fffbe0';
+    ctx.beginPath();
+    ctx.arc(sx, sy, 0.6 + rng() * 1.4, 0, Math.PI * 2);
+    ctx.fill();
   }
   ctx.globalAlpha = 1;
 
-  // Horizon warm glow
-  const hg = ctx.createLinearGradient(0, H * 0.35, 0, H * 0.52);
-  hg.addColorStop(0, 'transparent');
-  hg.addColorStop(0.5, 'rgba(255,140,50,0.08)');
-  hg.addColorStop(1, 'transparent');
-  ctx.fillStyle = hg; ctx.fillRect(0, H * 0.35, W, H * 0.17);
+  // Moon in the channel gap, clear of the ticket strip
+  const mx = 640, my = 210;
+  const halo = ctx.createRadialGradient(mx, my, 6, mx, my, 130);
+  halo.addColorStop(0, 'rgba(255,246,200,0.22)');
+  halo.addColorStop(1, 'rgba(255,246,200,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(mx - 130, my - 130, 260, 260);
+  ctx.fillStyle = '#ffeeb0';
+  ctx.beginPath();
+  ctx.arc(mx, my, 34, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(206,168,92,0.28)';
+  ctx.beginPath(); ctx.arc(mx - 11, my - 8, 8, 0, Math.PI * 2); ctx.fill();
+  ctx.beginPath(); ctx.arc(mx + 13, my + 11, 5, 0, Math.PI * 2); ctx.fill();
 
-  // Far shore silhouette
-  ctx.fillStyle = 'rgba(8,18,28,0.8)';
-  ctx.beginPath(); ctx.moveTo(0, H * 0.50);
-  for (let x = 0; x <= W; x += 50) {
-    ctx.lineTo(x, H * 0.50 + Math.sin(x * 0.008) * 10 - 12);
+  // Far shoreline with harbour lights (seen through the channel gap and above the piers)
+  ctx.fillStyle = '#0a1622';
+  ctx.beginPath();
+  ctx.moveTo(0, CHANNEL.waterY);
+  for (let x = 0; x <= W; x += 40) {
+    ctx.lineTo(x, CHANNEL.waterY - 46 + Math.sin(x * 0.01) * 9);
   }
-  ctx.lineTo(W, H * 0.50 + 8); ctx.lineTo(W, H * 0.50);
-  ctx.closePath(); ctx.fill();
-
-  // Shore buildings silhouettes with warm window lights
-  ctx.fillStyle = 'rgba(10,22,32,0.9)';
-  const buildings = [[30, 40], [100, 55], [200, 35], [350, 50], [500, 38],
-                    [W-60, 45], [W-130, 52], [W-230, 40]];
-  for (const [bx, bh] of buildings) {
-    const bw = 28 + (bx % 20);
-    const by = H * 0.50 - bh;
-    ctx.fillRect(bx - bw/2, by, bw, bh + 5);
-    ctx.fillStyle = 'rgba(255,190,70,0.25)';
-    ctx.fillRect(bx - 6, by + 4, 5, 6);
-    ctx.fillRect(bx + 1, by + 14, 5, 6);
-    ctx.fillStyle = 'rgba(10,22,32,0.9)';
+  ctx.lineTo(W, CHANNEL.waterY);
+  ctx.closePath();
+  ctx.fill();
+  for (const bx of [560, 600, 680, 720, 120, 300, 980, 1180]) {
+    ctx.fillStyle = '#0d1c2a';
+    ctx.fillRect(bx - 16, CHANNEL.waterY - 74, 32, 32);
+    ctx.fillStyle = 'rgba(255,196,90,0.5)';
+    ctx.fillRect(bx - 8, CHANNEL.waterY - 66, 5, 6);
+    ctx.fillRect(bx + 3, CHANNEL.waterY - 56, 5, 6);
   }
 
-  // Water body
-  const waterY = H * 0.52;
-  const wg = ctx.createLinearGradient(0, waterY, 0, H);
-  wg.addColorStop(0, '#162838');
-  wg.addColorStop(0.4, '#0c1a24');
-  wg.addColorStop(1, '#040c14');
-  ctx.fillStyle = wg; ctx.fillRect(0, waterY, W, H - waterY);
+  // Water
+  const wg = ctx.createLinearGradient(0, CHANNEL.waterY, 0, H);
+  wg.addColorStop(0, '#16303f');
+  wg.addColorStop(0.35, '#0b1a26');
+  wg.addColorStop(1, '#040a12');
+  ctx.fillStyle = wg;
+  ctx.fillRect(0, CHANNEL.waterY, W, H - CHANNEL.waterY);
 
-  // Water ripples
-  for (let i = 0; i < 10; i++) {
-    const wy = waterY + 10 + i * 38;
-    const al = 0.12 - i * 0.01;
-    ctx.strokeStyle = `rgba(40,100,140,${al})`;
+  // Ripples
+  for (let i = 0; i < 12; i++) {
+    const wy = CHANNEL.waterY + 12 + i * 30;
+    ctx.strokeStyle = 'rgba(46,110,146,' + (0.16 - i * 0.01) + ')';
     ctx.lineWidth = 1;
     ctx.beginPath();
-    for (let x = 0; x <= W; x += 12) {
-      const wave = Math.sin(x * 0.012 + time * (0.7 + i * 0.1)) * (2.5 + i * 0.3);
-      if (x === 0) ctx.moveTo(x, wy + wave); else ctx.lineTo(x, wy + wave);
+    for (let x = 0; x <= W; x += 14) {
+      const y = wy + Math.sin(x * 0.013 + t * (0.8 + i * 0.12)) * (2.5 + i * 0.25);
+      if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
     ctx.stroke();
   }
 
-  // Moon reflection
-  const rg = ctx.createLinearGradient(mx, waterY, mx, waterY + 100);
-  rg.addColorStop(0, 'rgba(255,230,150,0.18)');
-  rg.addColorStop(1, 'transparent');
-  ctx.fillStyle = rg; ctx.fillRect(mx - 40, waterY, 80, 110);
-
-  // Lantern reflections in water
-  const lpos = [[90, waterY + 130], [310, waterY + 110], [580, waterY + 140],
-                [850, waterY + 120], [1100, waterY + 130]];
-  for (const [lx, ly] of lpos) {
-    const wr = ctx.createRadialGradient(lx, ly, 0, lx, ly, 55);
-    wr.addColorStop(0, 'rgba(255,140,32,0.14)');
-    wr.addColorStop(1, 'transparent');
-    ctx.fillStyle = wr; ctx.fillRect(lx - 55, ly - 30, 110, 60);
+  // Moon and lantern reflections
+  reflect(ctx, mx, CHANNEL.waterY, 'rgba(255,236,170,0.16)', 46);
+  for (const lx of [90, 210, 340, 470, 810, 930, 1060, 1190]) {
+    reflect(ctx, lx, CHANNEL.waterY + 40, 'rgba(255,140,40,0.13)', 40);
   }
+}
+
+function reflect(ctx, x, y, color, w) {
+  const g = ctx.createLinearGradient(x, y, x, y + 120);
+  g.addColorStop(0, color);
+  g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(x - w / 2, y, w, 120);
 }

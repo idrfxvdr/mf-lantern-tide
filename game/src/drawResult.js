@@ -1,63 +1,86 @@
-// drawResult.js - Shift result warm card
+// drawResult.js - warm shift-result card held over the still-visible kitchen.
 import { RECIPES } from './recipes.js';
+import { drawFoodItem } from './drawFood.js';
 
-export function drawResult(ctx, W, H, state) {
-  const cx=W/2, cy=H*0.46;
-  const cw=480, ch=380;
-  const passed=state.shiftPassed;
+export function drawResult(ctx, state) {
+  const W = 1280, H = 800;
+  const cw = 620, ch = 470;
+  const x = (W - cw) / 2;
+  const y = (H - ch) / 2 - 10;
+  const passed = state.shiftPassed;
 
-  // Dim background but keep kitchen visible
-  ctx.fillStyle='rgba(0,0,0,0.5)'; ctx.fillRect(0,0,W,H);
+  ctx.fillStyle = 'rgba(6,10,16,0.45)';
+  ctx.fillRect(0, 0, W, H);
 
   // Card
-  ctx.save();
-  const cardGrad=ctx.createLinearGradient(cx-cw/2,cy-ch/2,cx+cw/2,cy+ch/2);
-  cardGrad.addColorStop(0,passed?'#1a3a1a':'#3a1a1a');
-  cardGrad.addColorStop(1,passed?'#0d2010':'#200a0a');
-  ctx.beginPath(); ctx.roundRect(cx-cw/2,cy-ch/2,cw,ch,16); ctx.fillStyle=cardGrad; ctx.fill();
-  ctx.strokeStyle=passed?'#44cc66':'#ff4444'; ctx.lineWidth=3; ctx.stroke();
+  const g = ctx.createLinearGradient(x, y, x, y + ch);
+  g.addColorStop(0, passed ? '#2a1c0c' : '#2c1210');
+  g.addColorStop(1, '#140c06');
+  ctx.fillStyle = g;
+  ctx.beginPath();
+  ctx.roundRect ? ctx.roundRect(x, y, cw, ch, 18) : ctx.rect(x, y, cw, ch);
+  ctx.fill();
+  ctx.lineWidth = 4;
+  ctx.strokeStyle = passed ? '#ffb347' : '#ff6a5a';
+  ctx.stroke();
 
   // Stars
-  const stars=passed?3:1;
-  for(let i=0;i<3;i++){
-    const sx=cx-60+i*60, sy=cy-ch/2+55;
-    ctx.fillStyle=i<stars?'#ffd700':'#444';
-    ctx.font='40px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
-    ctx.fillText('★',sx,sy);
+  const stars = passed ? 3 : 1;
+  ctx.font = '52px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  for (let i = 0; i < 3; i++) {
+    ctx.fillStyle = i < stars ? '#ffd24a' : 'rgba(120,100,70,0.5)';
+    ctx.fillText('★', x + cw / 2 - 90 + i * 90, y + 62);
   }
 
   // Title
-  ctx.fillStyle=passed?'#44cc66':'#ff4444';
-  ctx.font='bold 28px sans-serif';
-  ctx.fillText(passed?`SHIFT ${state.currentShift} COMPLETE!`:`SHIFT ${state.currentShift} FAILED`,cx,cy-ch/2+115);
+  ctx.fillStyle = passed ? '#8ce89a' : '#ff8a7a';
+  ctx.font = 'bold 34px sans-serif';
+  ctx.fillText(passed ? 'SHIFT ' + state.currentShift + ' COMPLETE' : 'SHIFT ' + state.currentShift + ' FAILED', x + cw / 2, y + 128);
 
   // Stats
-  const stats=[
-    ['Shift Score',String(state.shiftScore||0)],
-    ['Total Score',String(state.score||0)],
-    ['Best Combo',`x${Math.max(1,state.combo||0)}`],
+  const served = (state.orders || []).filter((o) => o.served).length;
+  const failed = (state.orders || []).filter((o) => o.failed).length;
+  const rows = [
+    ['Shift score', String(state.shiftScore || 0)],
+    ['Total score', String(state.score || 0)],
+    ['Best combo', 'x' + Math.max(1, state.bestCombo || state.combo || 1)],
+    ['Orders served', served + '  (' + failed + ' failed)'],
   ];
-  ctx.font='16px sans-serif'; ctx.textAlign='left'; ctx.textBaseline='top';
-  stats.forEach(([label,val],i)=>{
-    const ly=cy-ch/2+155+i*36;
-    ctx.fillStyle='#a08050'; ctx.fillText(label,cx-160,ly);
-    ctx.fillStyle='#ffd27d'; ctx.font='bold 16px sans-serif'; ctx.fillText(val,cx+20,ly);
-    ctx.font='16px sans-serif'; ctx.fillStyle='#a08050';
+  ctx.textAlign = 'left';
+  rows.forEach((r, i) => {
+    const ry = y + 186 + i * 38;
+    ctx.fillStyle = '#c8a878';
+    ctx.font = '20px sans-serif';
+    ctx.fillText(r[0], x + 60, ry);
+    ctx.fillStyle = '#ffe6b0';
+    ctx.font = 'bold 20px sans-serif';
+    ctx.fillText(r[1], x + 300, ry);
   });
 
-  // Orders served
-  const orders=state.orders||[];
-  const served=orders.filter(o=>o.served).length;
-  const failed=orders.filter(o=>o.failed).length;
-  const missed=orders.filter(o=>!o.served&&!o.failed).length;
-  ctx.fillStyle='#a08050'; ctx.font='13px sans-serif';
-  ctx.fillText(`Orders: ${served} served  |  ${failed} failed  |  ${missed} missed`,cx,cy-ch/2+270);
+  // Row of served dishes
+  ctx.textAlign = 'center';
+  ctx.fillStyle = '#c8a878';
+  ctx.font = '18px sans-serif';
+  ctx.fillText('Served tonight', x + cw / 2, y + 344);
+  const shown = (state.orders || []).filter((o) => o.served).slice(0, 5);
+  const fallback = RECIPES.slice(0, 3);
+  const list = shown.length ? shown : fallback.map((r) => ({ recipe: r }));
+  list.forEach((o, i) => {
+    const dx = x + cw / 2 + (i - (list.length - 1) / 2) * 96;
+    ctx.fillStyle = '#efe6cf';
+    ctx.beginPath(); ctx.ellipse(dx, y + 384, 42, 18, 0, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = '#c9bb9a'; ctx.lineWidth = 2; ctx.stroke();
+    const st = o.recipe.steps[0];
+    drawFoodItem(ctx, dx, y + 380, st.ing, st.state, 40);
+  });
 
-  // Action prompt
-  ctx.fillStyle='rgba(255,210,125,0.7)'; ctx.font='14px sans-serif'; ctx.textAlign='center';
-  if(passed&&state.currentShift>=5) ctx.fillText('All shifts done! Press ENTER',cx,cy+ch/2-30);
-  else if(passed) ctx.fillText('Press ENTER for next shift',cx,cy+ch/2-30);
-  else ctx.fillText('Press ENTER to retry',cx,cy+ch/2-30);
-
-  ctx.restore();
+  // Next step
+  ctx.fillStyle = '#ffd68a';
+  ctx.font = 'bold 20px sans-serif';
+  const next = passed
+    ? (state.currentShift >= 5 ? 'All five shifts done — press ENTER' : 'Next: shift ' + (state.currentShift + 1) + ' — press ENTER')
+    : 'Press ENTER to retry this shift';
+  ctx.fillText(next, x + cw / 2, y + ch - 34);
 }

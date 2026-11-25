@@ -1,150 +1,126 @@
-// drawPiers.js - Two big vertical piers with bridge and lanterns
-const PC = {dark:'#2a1808',mid:'#4a2e14',light:'#6b4422',top:'#8a5a30',rope:'#7a6040'};
+// drawPiers.js - the two market piers, the bridge over the channel, boats, lanterns.
+import { W, H, PIER, CHANNEL } from './layout.js';
 
-export function drawPiers(ctx, W, H, state) {
-  const time = state.time || 0;
-  const LP = {x:20, y:100, w:500, h:680};
-  const RP = {x:780, y:100, w:480, h:680};
-  const waterY = H * 0.52;
+const WOOD = { dark: '#2a1808', mid: '#4a2e14', light: '#6b4422', top: '#8a5a30', rope: '#8a7048' };
 
-  // Shadow under piers into water
-  ctx.fillStyle = 'rgba(0,0,0,0.35)';
-  ctx.fillRect(LP.x+8, waterY, LP.w, H-waterY);
-  ctx.fillRect(RP.x+8, waterY, RP.w, H-waterY);
-
-  drawPierFull(ctx, LP, time, false);
-  drawPierFull(ctx, RP, time, true);
-  drawBridge(ctx, W, H, state);
-  drawBoat(ctx, LP.x + 30, waterY + 60, 90, time);
-  drawBoat(ctx, RP.x + RP.w - 80, waterY + 50, 75, time + 2.5);
-  drawBoat(ctx, 560, waterY + 30, 60, time + 1.2);
+export function drawPiers(ctx, state) {
+  const t = state.time || 0;
+  drawPier(ctx, PIER.left, t, false);
+  drawPier(ctx, PIER.right, t, true);
+  drawBridge(ctx, state);
+  boat(ctx, 470, 760, 96, t);
+  boat(ctx, 800, 745, 84, t + 2.1);
+  boat(ctx, 600, 700, 68, t + 1.1);
 }
 
-function drawPierFull(ctx, P, time, isRight) {
-  // Main pier body
+function drawPier(ctx, P, t, isRight) {
+  // Body
   const g = ctx.createLinearGradient(0, P.y, 0, P.y + P.h);
-  g.addColorStop(0, PC.top); g.addColorStop(0.08, PC.light); g.addColorStop(0.25, PC.mid); g.addColorStop(1, PC.dark);
-  ctx.fillStyle = g; ctx.fillRect(P.x, P.y, P.w, P.h);
+  g.addColorStop(0, WOOD.top);
+  g.addColorStop(0.07, WOOD.light);
+  g.addColorStop(0.3, WOOD.mid);
+  g.addColorStop(1, WOOD.dark);
+  ctx.fillStyle = g;
+  ctx.fillRect(P.x, P.y, P.w, P.h);
 
-  // Wood planks (horizontal)
-  ctx.strokeStyle = 'rgba(0,0,0,0.18)'; ctx.lineWidth = 1;
-  for (let py = P.y + 16; py < P.y + P.h; py += 16) {
-    ctx.beginPath(); ctx.moveTo(P.x, py); ctx.lineTo(P.x + P.w, py); ctx.stroke();
+  // Planks
+  ctx.strokeStyle = 'rgba(0,0,0,0.16)';
+  ctx.lineWidth = 1;
+  for (let y = P.y + 22; y < P.y + P.h; y += 22) {
+    ctx.beginPath(); ctx.moveTo(P.x, y); ctx.lineTo(P.x + P.w, y); ctx.stroke();
   }
-  // Vertical joints every 65px
-  ctx.strokeStyle = 'rgba(0,0,0,0.1)';
-  for (let px = P.x + 65; px < P.x + P.w; px += 65) {
-    ctx.beginPath(); ctx.moveTo(px, P.y); ctx.lineTo(px, P.y + P.h); ctx.stroke();
-  }
-
-  // Top edge thick bar
-  ctx.fillStyle = PC.top; ctx.fillRect(P.x, P.y, P.w, 10);
-  ctx.fillStyle = PC.light; ctx.fillRect(P.x, P.y + 10, P.w, 4);
-  // Front face edge
-  ctx.strokeStyle = PC.light; ctx.lineWidth = 2;
+  // Front edge with thickness
+  ctx.fillStyle = WOOD.top;
+  ctx.fillRect(P.x, P.y + P.h - 14, P.w, 14);
+  ctx.fillStyle = WOOD.light;
+  ctx.fillRect(P.x, P.y + P.h - 14, P.w, 4);
+  ctx.strokeStyle = WOOD.light;
+  ctx.lineWidth = 3;
   ctx.strokeRect(P.x, P.y, P.w, P.h);
 
-  // Posts at corners
-  ctx.fillStyle = PC.mid;
-  ctx.fillRect(P.x + 10, P.y, 8, 14);
-  ctx.fillRect(P.x + P.w - 18, P.y, 8, 14);
-
-  // Lantern strings along top edge
-  const lxs = isRight ? [820, 950, 1080, 1210] : [70, 200, 340, 470];
-  for (const lx of lxs) {
-    // Rope
-    ctx.strokeStyle = PC.rope; ctx.lineWidth = 1.5;
-    ctx.beginPath(); ctx.moveTo(lx, P.y); ctx.lineTo(lx, P.y - 20); ctx.stroke();
-    drawLantern(ctx, lx, P.y - 20, 16);
-  }
-
-  // Decorative rope railings along pier edges
-  drawRailing(ctx, P.x, P.y + P.h - 14, P.w, false);
+  // Lantern string along the pier's top edge, below the ticket strip
+  const xs = isRight ? [800, 920, 1040, 1160, 1230] : [70, 190, 310, 430, 500];
+  ctx.strokeStyle = WOOD.rope;
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(P.x, P.y - 26);
+  ctx.quadraticCurveTo(P.x + P.w / 2, P.y - 6, P.x + P.w, P.y - 26);
+  ctx.stroke();
+  for (const lx of xs) lantern(ctx, lx, P.y - 16, 15, t + lx);
 }
 
-function drawRailing(ctx, x, y, w, horizontal) {
-  ctx.strokeStyle = PC.rope; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + w, y); ctx.stroke();
-  ctx.fillStyle = PC.mid;
-  const spacing = 55;
-  for (let rx = x + 30; rx < x + w - 20; rx += spacing) {
-    ctx.fillRect(rx - 2, y - 22, 4, 22);
-  }
-}
-
-function drawLantern(ctx, x, y, size) {
+function lantern(ctx, x, y, s, t) {
+  const sway = Math.sin(t * 1.6) * 2;
   ctx.save();
-  const g2 = ctx.createRadialGradient(x, y, 2, x, y, size * 3.5);
-  g2.addColorStop(0, 'rgba(255,140,32,0.35)');
-  g2.addColorStop(0.4, 'rgba(255,110,20,0.12)');
-  g2.addColorStop(1, 'transparent');
-  ctx.fillStyle = g2; ctx.fillRect(x - size*3.5, y - size*3.5, size*7, size*7);
-
+  ctx.translate(x + sway, y);
+  const g = ctx.createRadialGradient(0, 0, 2, 0, 0, s * 3.4);
+  g.addColorStop(0, 'rgba(255,150,50,0.38)');
+  g.addColorStop(0.45, 'rgba(255,120,30,0.12)');
+  g.addColorStop(1, 'rgba(255,120,30,0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(-s * 3.4, -s * 3.4, s * 6.8, s * 6.8);
   ctx.fillStyle = '#ff8c20';
-  ctx.beginPath(); ctx.ellipse(x, y, size*0.5, size*0.65, 0, 0, Math.PI*2); ctx.fill();
-  ctx.strokeStyle = '#ffb040'; ctx.lineWidth = 1.5; ctx.stroke();
-  ctx.fillStyle = PC.rope;
-  ctx.fillRect(x - size*0.3, y - size*0.65, size*0.6, size*0.12);
-  ctx.fillRect(x - size*0.25, y + size*0.55, size*0.5, size*0.1);
+  ctx.beginPath(); ctx.ellipse(0, 0, s * 0.52, s * 0.68, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#ffbc55';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = WOOD.rope;
+  ctx.fillRect(-s * 0.3, -s * 0.68, s * 0.6, s * 0.14);
+  ctx.fillRect(-s * 0.24, s * 0.56, s * 0.48, s * 0.12);
   ctx.restore();
 }
 
-function drawBridge(ctx, W, H, state) {
+function drawBridge(ctx, state) {
   const tide = state.tide;
-  const wobble = tide && tide.isHighTide ? Math.sin((state.time||0) * 2.5) * 5 : 0;
-  const bx = 530, bw = 240, by = H/2 + 5;
+  const drift = tide && tide.isHighTide ? Math.sin((state.time || 0) * 2.2) * 6 : 0;
+  const y = CHANNEL.bridgeY;
+  const x1 = CHANNEL.x1 + 6;
+  const x2 = CHANNEL.x2 - 6;
 
-  ctx.save(); ctx.translate(0, wobble);
-
-  // Water under bridge
-  const wg = ctx.createLinearGradient(0, by, 0, by + 80);
-  wg.addColorStop(0, '#0a1e28'); wg.addColorStop(1, '#060f18');
-  ctx.fillStyle = wg; ctx.fillRect(bx, by, bw, 80);
-
-  // Bridge planks
-  ctx.fillStyle = '#5a3820'; ctx.fillRect(bx, by - 5, bw, 22);
-  ctx.strokeStyle = '#7a5030'; ctx.lineWidth = 1;
-  for (let px = bx; px < bx + bw; px += 28) {
-    ctx.beginPath(); ctx.moveTo(px, by - 5); ctx.lineTo(px, by + 17); ctx.stroke();
+  ctx.save();
+  ctx.translate(0, drift);
+  // Planks
+  ctx.fillStyle = '#5a3820';
+  ctx.fillRect(x1, y, x2 - x1, 26);
+  ctx.strokeStyle = '#7a5030';
+  ctx.lineWidth = 1;
+  for (let x = x1; x < x2; x += 26) {
+    ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x, y + 26); ctx.stroke();
   }
-  // Rope railings
-  ctx.strokeStyle = PC.rope; ctx.lineWidth = 2;
-  ctx.beginPath(); ctx.moveTo(bx, by - 22); ctx.lineTo(bx+bw, by - 22); ctx.stroke();
-  ctx.beginPath(); ctx.moveTo(bx, by + 17); ctx.lineTo(bx+bw, by + 17); ctx.stroke();
-  ctx.fillStyle = PC.mid;
-  for (let px = bx + 40; px < bx + bw - 20; px += 48) {
-    ctx.fillRect(px - 2, by - 22, 4, 40);
-  }
-  // Label
-  ctx.fillStyle = 'rgba(255,200,100,0.45)';
-  ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-  ctx.fillText(tide && tide.isHighTide ? 'DRIFTING' : 'BRIDGE', bx + bw/2, by + 55);
-
+  // Ropes and posts
+  ctx.strokeStyle = WOOD.rope;
+  ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(x1, y - 26); ctx.lineTo(x2, y - 26); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x1, y + 26); ctx.lineTo(x2, y + 26); ctx.stroke();
+  ctx.fillStyle = WOOD.mid;
+  for (let x = x1 + 20; x < x2; x += 44) ctx.fillRect(x - 3, y - 26, 6, 54);
+  ctx.fillStyle = 'rgba(255,214,140,0.55)';
+  ctx.font = 'bold 16px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(tide && tide.isHighTide ? 'DRIFTING BRIDGE' : 'PLANK BRIDGE', (x1 + x2) / 2, y + 52);
   ctx.restore();
 }
 
-function drawBoat(ctx, x, y, size, time) {
-  const bob = Math.sin(time * 1.4 + x * 0.008) * 4;
-  ctx.save(); ctx.translate(x + size/2, y + bob);
-
-  // Hull
+function boat(ctx, x, y, s, t) {
+  const bob = Math.sin(t * 1.3 + x * 0.01) * 5;
+  ctx.save();
+  ctx.translate(x, y + bob);
   ctx.fillStyle = '#3d1e08';
   ctx.beginPath();
-  ctx.moveTo(-size/2, 0);
-  ctx.quadraticCurveTo(-size*0.6, 18, -size/3, 22);
-  ctx.lineTo(size/3, 22);
-  ctx.quadraticCurveTo(size*0.6, 18, size/2, 0);
-  ctx.lineTo(size*0.38, -12);
-  ctx.lineTo(-size*0.38, -12);
-  ctx.closePath(); ctx.fill();
-  ctx.strokeStyle = '#5a3820'; ctx.lineWidth = 1.5; ctx.stroke();
-
-  // Small lantern
-  ctx.fillStyle = '#ff8c20';
-  ctx.beginPath(); ctx.ellipse(0, -18, 4, 6, 0, 0, Math.PI*2); ctx.fill();
-  const lg = ctx.createRadialGradient(0, -18, 2, 0, -18, 22);
-  lg.addColorStop(0, 'rgba(255,140,32,0.22)'); lg.addColorStop(1, 'transparent');
-  ctx.fillStyle = lg; ctx.fillRect(-22, -40, 44, 44);
-
+  ctx.moveTo(-s / 2, 0);
+  ctx.quadraticCurveTo(-s * 0.62, s * 0.2, -s / 3, s * 0.24);
+  ctx.lineTo(s / 3, s * 0.24);
+  ctx.quadraticCurveTo(s * 0.62, s * 0.2, s / 2, 0);
+  ctx.lineTo(s * 0.38, -s * 0.14);
+  ctx.lineTo(-s * 0.38, -s * 0.14);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = '#6b4422';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  // Cargo
+  ctx.fillStyle = '#c8a060';
+  ctx.fillRect(-s * 0.2, -s * 0.3, s * 0.4, s * 0.18);
   ctx.restore();
 }
