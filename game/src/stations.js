@@ -1,119 +1,76 @@
-// Cooking stations: ingredient crates, chopping board, stove pan, steamer pot, plating counter, serving window
-import { INGREDIENTS, nextState, STATES } from './recipes.js';
+// stations.js - Station definitions for new layout
+import { INGREDIENTS, nextState } from './recipes.js';
 import * as Audio from './audio.js';
 
-// Station types
 export const ST = {
-  CRATE: 'crate',
-  CHOP: 'chop',
-  STOVE: 'stove',
-  STEAMER: 'steamer',
-  PLATE: 'plate',
-  SERVE: 'serve',
-  TRASH: 'trash',
+  CRATE:'crate', CHOP:'chop', STOVE:'stove', STEAMER:'steamer',
+  PLATE:'plate', SERVE:'serve', TRASH:'trash',
 };
-
-// Create all stations for the kitchen layout
-// Layout: Left pier has ingredient crates + chop station
-// Center has steamer + stove
-// Right pier has plating + serving
-// Player walks between stations
 
 export function createStations() {
   const stations = [];
-
-  // --- LEFT PIER (ingredient area) ---
   const ingKeys = Object.keys(INGREDIENTS);
-  const crateStartX = 80;
-  const crateY = 200;
-  const crateSpacing = 52;
 
+  // Left pier: ingredient crates (2 rows × 4 cols)
+  // Row 1 at y=190, Row 2 at y=340, cols at x=70,190,310,430
   ingKeys.forEach((key, i) => {
+    const col = i % 4;
+    const row = Math.floor(i / 4);
     stations.push({
-      id: `crate_${key}`,
+      id: 'crate_' + key,
       type: ST.CRATE,
-      x: crateStartX + (i % 4) * crateSpacing,
-      y: crateY + Math.floor(i / 4) * 52,
-      radius: 20,
+      x: 70 + col * 120,
+      y: 190 + row * 150,
+      radius: 36,
       ingredient: key,
       label: INGREDIENTS[key].name,
       color: INGREDIENTS[key].color,
+      accent: INGREDIENTS[key].accent,
     });
   });
 
-  // Chopping board
+  // Chopping board (center of left pier middle)
   stations.push({
-    id: 'chop_board',
-    type: ST.CHOP,
-    x: 300,
-    y: 260,
-    radius: 28,
-    label: 'CHOP',
-    contents: null, // item being processed
-    progress: 0,
-    burning: false,
-    burnTimer: 0,
+    id: 'chop_board', type: ST.CHOP,
+    x: 250, y: 540, radius: 40,
+    label: 'CHOP', contents: null, progress: 0,
+    burning: false, burnTimer: 0,
   });
 
-  // Trash bin
+  // Trash (bottom left)
   stations.push({
-    id: 'trash',
-    type: ST.TRASH,
-    x: 220,
-    y: 320,
-    radius: 20,
-    label: 'TRASH',
+    id: 'trash', type: ST.TRASH,
+    x: 80, y: 680, radius: 28, label: 'TRASH',
   });
 
-  // --- CENTER (cooking area) ---
-  // Stove pan
+  // Stove/wok (bottom right of left pier)
   stations.push({
-    id: 'stove_pan',
-    type: ST.STOVE,
-    x: 640,
-    y: 280,
-    radius: 32,
-    label: 'PAN',
-    contents: null,
-    progress: 0,
-    burning: false,
-    burnTimer: 0,
+    id: 'stove_pan', type: ST.STOVE,
+    x: 430, y: 640, radius: 44,
+    label: 'PAN', contents: null, progress: 0,
+    burning: false, burnTimer: 0,
   });
 
-  // Steamer pot
+  // Steamer (bottom center of left pier)
   stations.push({
-    id: 'steamer_pot',
-    type: ST.STEAMER,
-    x: 480,
-    y: 280,
-    radius: 30,
-    label: 'STEAM',
-    contents: null,
-    progress: 0,
-    burning: false,
-    burnTimer: 0,
+    id: 'steamer_pot', type: ST.STEAMER,
+    x: 120, y: 680, radius: 38,
+    label: 'STEAM', contents: null, progress: 0,
+    burning: false, burnTimer: 0,
   });
 
-  // --- RIGHT PIER (assembly area) ---
-  // Plating counter
+  // Plate counter (right pier)
   stations.push({
-    id: 'plate_counter',
-    type: ST.PLATE,
-    x: 900,
-    y: 260,
-    radius: 30,
-    label: 'PLATE',
-    contents: [], // assembled steps so far
+    id: 'plate_counter', type: ST.PLATE,
+    x: 940, y: 560, radius: 44,
+    label: 'PLATE', contents: [],
   });
 
-  // Serving window
+  // Serving window (right pier upper)
   stations.push({
-    id: 'serve_window',
-    type: ST.SERVE,
-    x: 1060,
-    y: 280,
-    radius: 28,
-    label: 'SERVE',
+    id: 'serve_window', type: ST.SERVE,
+    x: 1140, y: 300, radius: 52,
+    label: 'SERVE', contents: null,
   });
 
   return stations;
@@ -123,119 +80,102 @@ export function getStationById(stations, id) {
   return stations.find(s => s.id === id);
 }
 
-export function interactWithStation(station, player, stations) {
+export function interactWithStation(station, player) {
   if (!station) return;
+  const T = station.type;
 
-  switch (station.type) {
-    case ST.CRATE: {
-      if (!player.carrying) {
-        player.pickup({
-          ing: station.ingredient,
-          state: 'raw',
-          stepIdx: -1,
-          recipeId: null,
-        });
-      }
-      break;
+  if (T === ST.CRATE) {
+    if (!player.carrying) {
+      player.pickup({ ing: station.ingredient, state: 'raw', stepIdx: -1, recipeId: null });
     }
+    return;
+  }
 
-    case ST.CHOP: {
-      if (player.carrying && !station.contents) {
-        if (player.carrying.state === 'raw') {
-          station.contents = player.drop();
-          station.contents.state = 'chopped';
-          station.progress = 0;
-          Audio.playChop();
-        }
-      } else if (station.contents && !player.carrying) {
-        player.pickup(station.contents);
-        station.contents = null;
-      }
-      break;
-    }
-
-    case ST.STOVE: {
-      if (player.carrying && !station.contents) {
-        const from = player.carrying.state;
-        if (from === 'raw' || from === 'chopped') {
-          station.contents = player.drop();
-          station.contents.state = nextState(from);
-          station.progress = 0;
-          station.burning = false;
-          station.burnTimer = 0;
-          Audio.playFry();
-        }
-      } else if (station.contents && !player.carrying) {
-        player.pickup(station.contents);
-        station.contents = null;
+  if (T === ST.CHOP) {
+    if (player.carrying && !station.contents) {
+      if (player.carrying.state === 'raw') {
+        const item = player.drop();
+        item.state = 'chopped';
+        station.contents = item;
         station.progress = 0;
-        station.burning = false;
+        Audio.playChop();
       }
-      break;
+    } else if (!player.carrying && station.contents) {
+      player.pickup(station.contents);
+      station.contents = null;
     }
+    return;
+  }
 
-    case ST.STEAMER: {
-      if (player.carrying && !station.contents) {
-        const from = player.carrying.state;
-        if (from === 'raw' || from === 'chopped') {
-          station.contents = player.drop();
-          station.contents.state = nextState(from);
-          if (station.contents.state === 'chopped') station.contents.state = 'steamed';
-          station.progress = 0;
-          station.burning = false;
-          station.burnTimer = 0;
-          Audio.playSteam();
-        }
-      } else if (station.contents && !player.carrying) {
-        player.pickup(station.contents);
-        station.contents = null;
+  if (T === ST.STOVE) {
+    if (player.carrying && !station.contents) {
+      const from = player.carrying.state;
+      if (from === 'raw' || from === 'chopped') {
+        const item = player.drop();
+        item.state = nextState(from);
+        station.contents = item;
         station.progress = 0;
-        station.burning = false;
+        station.burning = false; station.burnTimer = 0;
+        Audio.playFry();
       }
-      break;
+    } else if (!player.carrying && station.contents) {
+      player.pickup(station.contents);
+      station.contents = null;
+      station.progress = 0; station.burning = false;
     }
+    return;
+  }
 
-    case ST.PLATE: {
-      if (player.carrying && station.contents.length < 5) {
-        station.contents.push({ ...player.carrying });
-        player.carrying = null;
-        Audio.playDrop();
-      } else if (!player.carrying && station.contents.length > 0) {
-        // Take last item back
-        const item = station.contents.pop();
-        player.pickup(item);
+  if (T === ST.STEAMER) {
+    if (player.carrying && !station.contents) {
+      const from = player.carrying.state;
+      if (from === 'raw' || from === 'chopped') {
+        const item = player.drop();
+        item.state = 'steamed';
+        station.contents = item;
+        station.progress = 0;
+        station.burning = false; station.burnTimer = 0;
+        Audio.playSteam();
       }
-      break;
+    } else if (!player.carrying && station.contents) {
+      player.pickup(station.contents);
+      station.contents = null;
+      station.progress = 0; station.burning = false;
     }
+    return;
+  }
 
-    case ST.SERVE: {
-      // This is handled in orders.js - collect completed plate
-      break;
+  if (T === ST.PLATE) {
+    if (player.carrying && station.contents.length < 6) {
+      station.contents.push({ ...player.carrying });
+      player.drop();
+    } else if (!player.carrying && station.contents.length > 0) {
+      const item = station.contents.pop();
+      player.pickup(item);
     }
+    return;
+  }
 
-    case ST.TRASH: {
-      if (player.carrying) {
-        player.trash();
-      }
-      break;
-    }
+  if (T === ST.SERVE) {
+    // Handle from main loop
+    return;
+  }
+
+  if (T === ST.TRASH) {
+    if (player.carrying) player.trash();
   }
 }
 
-// Process station timers
 export function updateStations(stations, dt) {
   for (const s of stations) {
     if (s.type === ST.CHOP || s.type === ST.STOVE || s.type === ST.STEAMER) {
       if (s.contents) {
         s.progress = Math.min(1, s.progress + dt / 1.5);
-        // Auto-burn after sitting too long (4 seconds after done)
         if (s.progress >= 1) {
           s.burnTimer += dt;
-          if (s.burnTimer > 4) {
+          if (s.burnTimer > 5) {
             s.contents.state = 'burned';
-            s.progress = 0;
-            s.burnTimer = 0;
-            s.burning = true;
+            s.progress = 0; s.burnTimer = 0; s.burning = true;
             Audio.playBurn();
           }
         }
