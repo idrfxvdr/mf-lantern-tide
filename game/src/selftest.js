@@ -82,7 +82,7 @@ export function runSelfTest(g) {
   log('picked from steamer = ' + (g.player.carrying ? g.player.carrying.state : 'nothing'));
   if (!g.player.carrying) return finish(false);
 
-  if (!routeTo({ x: 790, y: 555 })) return finish(false);
+  if (!routeTo({ x: 790, y: 600 })) return finish(false);
   tap('KeyE', 'e');
   if (!routeTo({ x: 1050, y: 545 })) return finish(false);
   tap('KeyE', 'e');

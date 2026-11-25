@@ -1,6 +1,6 @@
 // drawClock.js - the big round lantern clock at the top centre. It turns urgent
 // (red, pulsing) under 15 seconds and shows the shift number underneath.
-import { HUD } from './layout.js';
+import { HUD, FONT_STACK } from './layout.js';
 
 export function drawClock(ctx, state) {
   const { x: cx, y: cy, r } = HUD.clock;
@@ -61,12 +61,12 @@ export function drawClock(ctx, state) {
   ctx.stroke();
 
   ctx.fillStyle = urgent ? '#ffd0c0' : '#ffe6b0';
-  ctx.font = 'bold 22px sans-serif';
+  ctx.font = `bold 22px ${FONT_STACK}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(mins + ':' + String(secs).padStart(2, '0'), cx, cy + r * 0.48);
 
   ctx.fillStyle = 'rgba(255,214,140,0.9)';
-  ctx.font = 'bold 16px sans-serif';
+  ctx.font = `bold 16px ${FONT_STACK}`;
   ctx.fillText('SHIFT ' + (state.currentShift || 1) + '/5', cx, cy + r + 12);
 }

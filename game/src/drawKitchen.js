@@ -4,6 +4,7 @@ import { W, H } from './layout.js';
 import { drawWater } from './drawWater.js';
 import { drawPiers } from './drawPiers.js';
 import { drawStations } from './drawStations.js';
+import { drawProps } from './drawProps.js';
 import { drawChef } from './drawChef.js';
 
 export const C = {
@@ -17,6 +18,7 @@ export const C = {
 export function drawKitchen(ctx, state) {
   drawWater(ctx, state);
   drawPiers(ctx, state);
+  drawProps(ctx, state);
   drawStations(ctx, state);
   if (state.player) drawChef(ctx, state.player, state.time || 0);
   if (state.particles) state.particles.draw(ctx);

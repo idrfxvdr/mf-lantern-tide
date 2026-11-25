@@ -30,7 +30,7 @@ export function newGame(seed = 9999) {
     tips: 0,
     orders: [],
     stations: createStations(),
-    player: new Player(150, 640),
+    player: new Player(790, 620),
     tide: new Tide(42),
     orderManager: new OrderManager(seed),
     particles: new Particles(makeRng(seed + 11)),
@@ -65,7 +65,7 @@ export function startShift(g, shift) {
   g.orderManager.spawnOrders(shift);
   g.orders = g.orderManager.orders;
   g.particles = new Particles(makeRng(g.seed + shift * 31));
-  g.player = new Player(150, 640);
+  g.player = new Player(790, 620);
   g.tide = new Tide(g.seed + shift * 42);
   g.tide.setTime(shift * 3.7);
   g.time = 0;

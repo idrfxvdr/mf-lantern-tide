@@ -2,8 +2,9 @@
 // crate labels, station labels or ticket sub-boxes from layout.js intersect.
 // Run: node overlap.mjs   (exit 0 = clean, 1 = collisions printed)
 import {
-  HUD, TICKETS, CRATES, STATIONS, TICKET_INNER,
-  crateBox, crateLabelBox, stationLabelBox, clockBox, clockLabelBox, ticketInnerBoxes,
+  HUD, TICKETS, CRATES, STATIONS, TICKET_INNER, PROPS,
+  crateBox, crateLabelBox, stationLabelBox, clockBox, clockLabelBox,
+  ticketInnerBoxes, propBox,
 } from './game/src/layout.js';
 import { INGREDIENTS } from './game/src/recipes.js';
 
@@ -24,6 +25,7 @@ TICKETS.forEach((t, i) => {
   add('ticket' + i + '.dish', inner.dish, 'ticket' + i);
   add('ticket' + i + '.bar', inner.bar, 'ticket' + i);
   add('ticket' + i + '.price', inner.price, 'ticket' + i);
+  add('ticket' + i + '.icons', inner.icons, 'ticket' + i);
 });
 
 // Clock and its caption
@@ -38,6 +40,9 @@ for (const c of CRATES) {
 
 // Station labels
 for (const s of STATIONS) add('stationLabel.' + s.id, stationLabelBox(s));
+
+// Pier dressing (barrels, sacks, rope, bollards, brazier) must clear every label too.
+PROPS.forEach((p, i) => add('prop' + i + '.' + p.kind, propBox(p)));
 
 // Pairwise intersection with a 1px tolerance (touching edges is fine).
 function overlap(a, b) {

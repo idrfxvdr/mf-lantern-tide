@@ -1,6 +1,6 @@
 // drawCrates.js - ingredient crates with the food sitting down inside them,
 // labels directly underneath, all positioned from layout.js.
-import { CRATES } from './layout.js';
+import { CRATES, FONT_STACK } from './layout.js';
 import { INGREDIENTS } from './recipes.js';
 import { drawFoodItem } from './drawFood.js';
 
@@ -53,7 +53,7 @@ export function drawCrates(ctx, state) {
 
     // Label directly under the crate
     ctx.fillStyle = '#ffe0a8';
-    ctx.font = 'bold 17px sans-serif';
+    ctx.font = `bold 17px ${FONT_STACK}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';
     ctx.fillText(info.name, c.x, c.labelY);

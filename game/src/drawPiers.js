@@ -1,6 +1,6 @@
 // drawPiers.js - the two market piers, the tide crossing (drifting bridge or narrow
 // plank), moored boats in the channel, lanterns and their reflections.
-import { PIER, CHANNEL } from './layout.js';
+import { PIER, CHANNEL, FONT_STACK } from './layout.js';
 
 const WOOD = { dark: '#2a1808', mid: '#4a2e14', light: '#6b4422', top: '#8a5a30', rope: '#8a7048' };
 
@@ -9,8 +9,8 @@ export function drawPiers(ctx, state) {
   drawPier(ctx, PIER.left, t, false);
   drawPier(ctx, PIER.right, t, true);
   drawCrossing(ctx, state);
-  boat(ctx, 585, 648, 78, t);
-  boat(ctx, 692, 692, 54, t + 2.1);
+  boat(ctx, 578, 618, 78, t);
+  boat(ctx, 700, 664, 54, t + 2.1);
 }
 
 function drawPier(ctx, P, t, isRight) {
@@ -107,7 +107,7 @@ function drawCrossing(ctx, state) {
 
 function bridgeLabel(ctx, text, y, color) {
   ctx.fillStyle = 'rgba(6,10,16,0.55)';
-  ctx.font = 'bold 16px sans-serif';
+  ctx.font = `bold 16px ${FONT_STACK}`;
   const w = ctx.measureText(text).width + 18;
   ctx.fillRect(640 - w / 2, y - 11, w, 22);
   ctx.fillStyle = color;

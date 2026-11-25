@@ -1,6 +1,6 @@
 // drawService.js - the plating counter, the serving hatch with waiting customers,
 // and the trash bin. Food is drawn by drawFood.js.
-import { STATIONS } from './layout.js';
+import { STATIONS, FONT_STACK } from './layout.js';
 import { drawPlate } from './drawFood.js';
 
 const S = { text: '#ffe0a8', woodDark: '#3d2410' };
@@ -18,7 +18,7 @@ export function drawService(ctx, state) {
 
 function label(ctx, s, color) {
   ctx.fillStyle = color || S.text;
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = `bold 18px ${FONT_STACK}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillText(s.label, s.x, s.y + s.r + 20);
@@ -117,7 +117,7 @@ function trash(ctx, s) {
   ctx.beginPath(); ctx.arc(s.x, s.y, s.r * 0.76, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = '#2a1010'; ctx.lineWidth = 4; ctx.stroke();
   ctx.fillStyle = '#ff8a8a';
-  ctx.font = 'bold 30px sans-serif';
+  ctx.font = `bold 30px ${FONT_STACK}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('X', s.x, s.y);

@@ -1,6 +1,6 @@
 // drawTickets.js - four large paper order tickets along the top. Each ticket has its
 // own name row, dish picture, ingredient icons with a state glyph, patience bar and price.
-import { TICKETS, TICKET_INNER } from './layout.js';
+import { TICKETS, TICKET_INNER, FONT_STACK } from './layout.js';
 import { drawFoodItem } from './drawFood.js';
 
 function rrect(ctx, x, y, w, h, r) {
@@ -73,7 +73,7 @@ function ticket(ctx, b, order) {
 
   if (!order) {
     ctx.fillStyle = 'rgba(255,224,168,0.45)';
-    ctx.font = 'bold 18px sans-serif';
+    ctx.font = `bold 18px ${FONT_STACK}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('WAITING', b.x + b.w / 2, b.y + b.h / 2);
@@ -87,7 +87,7 @@ function ticket(ctx, b, order) {
 
   // Name on its own row, condensed to fit if long.
   ctx.fillStyle = '#3a2412';
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = `bold 18px ${FONT_STACK}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   ctx.fillText(r.name, b.x + I.name.x, b.y + I.name.y, I.name.w);
@@ -121,7 +121,7 @@ function ticket(ctx, b, order) {
   ctx.fillStyle = 'rgba(58,36,18,0.9)';
   ctx.fill();
   ctx.fillStyle = '#ffd76a';
-  ctx.font = 'bold 16px sans-serif';
+  ctx.font = `bold 16px ${FONT_STACK}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('+' + r.points, b.x + I.price.x + I.price.w / 2, b.y + I.price.y + I.price.h / 2 + 1);

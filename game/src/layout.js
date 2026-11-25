@@ -1,11 +1,16 @@
 // layout.js - THE one layout table shared by drawing, game logic and overlap.mjs.
 // Every station's position, size, label and hit area comes from here, and every
-// HUD panel and text box is declared here so overlap.mjs can prove they never collide.
+// HUD panel, ticket row and text box is declared here so overlap.mjs can prove
+// that nothing drawn on top of anything else.
 
 export const W = 1280;
 export const H = 800;
 
+// One rounded sans-serif stack for every piece of canvas text (review: no monospace).
+export const FONT_STACK = '"Trebuchet MS", "Segoe UI", Verdana, sans-serif';
+
 // Piers: left holds crates + chop + trash, right holds pan + steamer + plate + serve.
+// Both span y=150..700 so the kitchen fills the frame instead of a thin strip.
 export const PIER = {
   left:  { x: 40,  y: 150, w: 480, h: 550 },
   right: { x: 760, y: 150, w: 480, h: 550 },
@@ -64,7 +69,7 @@ export const STATIONS = [
   { id: 'trash',         type: 'trash',   x: 452, y: 528, r: 38, label: 'TRASH' },
   { id: 'stove_pan',     type: 'stove',   x: 900, y: 250, r: 58, label: 'PAN' },
   { id: 'steamer_pot',   type: 'steamer', x: 1100, y: 250, r: 54, label: 'STEAM' },
-  { id: 'plate_counter', type: 'plate',   x: 880, y: 470, r: 72, label: 'PLATE' },
+  { id: 'plate_counter', type: 'plate',   x: 880, y: 470, r: 72, reach: 180, label: 'PLATE' },
   { id: 'serve_window',  type: 'serve',   x: 1120, y: 500, r: 66, label: 'SERVE' },
 ];
 
@@ -74,7 +79,7 @@ export const STAND = {
   trash:         { x: 390,  y: 600 },
   stove_pan:     { x: 830,  y: 300 },
   steamer_pot:   { x: 1020, y: 300 },
-  plate_counter: { x: 790,  y: 555 },
+  plate_counter: { x: 790,  y: 600 },
   serve_window:  { x: 1050, y: 545 },
 };
 
@@ -104,9 +109,32 @@ export const TICKET_INNER = {
   name:  { x: 10, y: 6,  w: 230, h: 24 },
   dish:  { cx: 42, cy: 54, rx: 34, ry: 15 },
   icons: { x: 92, y: 48, step: 46, size: 28, stateY: 62 },
-  bar:   { x: 10, y: 82, w: 150, h: 9 },
-  price: { x: 180, y: 80, w: 60, h: 16 },
+  bar:   { x: 10, y: 82, w: 146, h: 9 },
+  price: { x: 180, y: 78, w: 60, h: 18 },
 };
+
+// Decoration on the lower piers. Declared here so drawProps.js draws from the same
+// table overlap.mjs checks against: nothing may sit on a label.
+export const PROPS = [
+  { kind: 'barrel',  x: 74,   y: 660, s: 30 },
+  { kind: 'barrel',  x: 236,  y: 668, s: 26 },
+  { kind: 'sack',    x: 330,  y: 660, s: 30 },
+  { kind: 'rope',    x: 470,  y: 682, s: 22 },
+  { kind: 'barrel',  x: 806,  y: 660, s: 28 },
+  { kind: 'sack',    x: 1218, y: 664, s: 28 },
+  { kind: 'rope',    x: 1000, y: 684, s: 20 },
+  { kind: 'bollard', x: 52,   y: 590 },
+  { kind: 'bollard', x: 1228, y: 590 },
+  { kind: 'brazier', x: 398,  y: 676 },
+];
+
+// Bounding box of a prop, used by overlap.mjs (a brazier is taller than it is wide).
+export function propBox(p) {
+  if (p.kind === 'bollard') return { x: p.x - 10, y: p.y - 28, w: 20, h: 32 };
+  if (p.kind === 'brazier') return { x: p.x - 26, y: p.y - 34, w: 52, h: 50 };
+  const s = p.s || 26;
+  return { x: p.x - s, y: p.y - s, w: s * 2, h: s * 1.6 };
+}
 
 // ---- box helpers (used by draw code and overlap.mjs) ----
 
@@ -140,6 +168,7 @@ export function ticketInnerBoxes(t) {
   return {
     name: { x: t.x + I.name.x, y: t.y + I.name.y, w: I.name.w, h: I.name.h },
     dish: { x: t.x + I.dish.cx - I.dish.rx, y: t.y + I.dish.cy - I.dish.ry, w: I.dish.rx * 2, h: I.dish.ry * 2 },
+    icons: { x: t.x + I.icons.x - I.icons.size / 2, y: t.y + I.icons.y - I.icons.size / 2, w: I.icons.step * 2 + I.icons.size, h: I.icons.size + 10 },
     bar: { x: t.x + I.bar.x, y: t.y + I.bar.y, w: I.bar.w, h: I.bar.h },
     price: { x: t.x + I.price.x, y: t.y + I.price.y, w: I.price.w, h: I.price.h },
   };

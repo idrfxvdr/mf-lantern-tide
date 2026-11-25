@@ -1,6 +1,6 @@
 // drawCookware.js - the chopping board, the wok on its flame and the bamboo steamer.
 // The plating counter, serving hatch and trash live in drawService.js.
-import { STATIONS } from './layout.js';
+import { STATIONS, FONT_STACK } from './layout.js';
 import { drawFoodItem } from './drawFood.js';
 import { drawService } from './drawService.js';
 
@@ -20,7 +20,7 @@ export function drawCookware(ctx, state) {
 
 function label(ctx, s, color) {
   ctx.fillStyle = color || S.text;
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = `bold 18px ${FONT_STACK}`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillText(s.label, s.x, s.y + s.r + 20);

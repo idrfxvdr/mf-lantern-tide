@@ -1,6 +1,6 @@
 // hud.js - score, tide, carried item, help, mute, combo tips and the full-screen cards.
 // Every panel box comes from layout.js so nothing overlaps (see overlap.mjs).
-import { HUD } from './layout.js';
+import { HUD, FONT_STACK } from './layout.js';
 import { INGREDIENTS } from './recipes.js';
 import { drawFoodItem } from './drawFood.js';
 import { drawTickets } from './drawTickets.js';
@@ -37,13 +37,13 @@ function score(ctx, state) {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
   ctx.fillStyle = '#c8a878';
-  ctx.font = '16px sans-serif';
+  ctx.font = `16px ${FONT_STACK}`;
   ctx.fillText('SCORE', b.x + 16, b.y + 10);
   ctx.fillStyle = '#ffd76a';
-  ctx.font = 'bold 34px sans-serif';
+  ctx.font = `bold 34px ${FONT_STACK}`;
   ctx.fillText(String(state.score || 0).padStart(5, '0'), b.x + 16, b.y + 30);
   ctx.fillStyle = '#9ec48a';
-  ctx.font = '16px sans-serif';
+  ctx.font = `16px ${FONT_STACK}`;
   ctx.fillText('shift +' + (state.shiftScore || 0), b.x + 140, b.y + 46);
 }
 
@@ -56,11 +56,11 @@ function tide(ctx, state) {
   const col = level > 0.62 ? '#7fc4e8' : level < 0.38 ? '#f0a860' : '#9ab8d0';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillStyle = '#c8a878';
-  ctx.font = '16px sans-serif';
+  ctx.fillStyle = '#d8bc94';
+  ctx.font = `16px ${FONT_STACK}`;
   ctx.fillText('TIDE', b.x + 60, b.y + 10);
   ctx.fillStyle = col;
-  ctx.font = 'bold 26px sans-serif';
+  ctx.font = `bold 26px ${FONT_STACK}`;
   ctx.fillText(label, b.x + 60, b.y + 30);
   const gx = b.x + 14, gy = b.y + 14, gw = 34, gh = 54;
   ctx.fillStyle = '#0a141c';
@@ -70,8 +70,8 @@ function tide(ctx, state) {
   ctx.strokeStyle = 'rgba(255,200,120,0.6)';
   ctx.lineWidth = 2;
   ctx.strokeRect(gx, gy, gw, gh);
-  ctx.fillStyle = '#a89070';
-  ctx.font = '16px sans-serif';
+  ctx.fillStyle = '#c8a878';
+  ctx.font = `16px ${FONT_STACK}`;
   ctx.fillText(level > 0.62 ? 'bridge drifts' : level < 0.38 ? 'plank is out' : 'no crossing', b.x + 60, b.y + 58);
 }
 
@@ -82,22 +82,22 @@ function held(ctx, state) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
   ctx.fillStyle = '#c8a878';
-  ctx.font = '16px sans-serif';
+  ctx.font = `16px ${FONT_STACK}`;
   ctx.fillText('CARRYING', b.x + b.w / 2, b.y + 8);
   if (!p || !p.carrying) {
     ctx.fillStyle = 'rgba(200,168,120,0.6)';
-    ctx.font = '16px sans-serif';
+    ctx.font = `16px ${FONT_STACK}`;
     ctx.fillText('nothing', b.x + b.w / 2, b.y + 46);
     return;
   }
   const info = INGREDIENTS[p.carrying.ing];
-  drawFoodItem(ctx, b.x + 34, b.y + 48, p.carrying.ing, p.carrying.state, 56);
+  drawFoodItem(ctx, b.x + 34, b.y + 48, p.carrying.ing, p.carrying.state, 62);
   ctx.textAlign = 'left';
   ctx.fillStyle = '#ffe6b0';
-  ctx.font = 'bold 16px sans-serif';
+  ctx.font = `bold 16px ${FONT_STACK}`;
   ctx.fillText(info ? info.name : p.carrying.ing, b.x + 68, b.y + 28, 76);
   ctx.fillStyle = '#c8a878';
-  ctx.font = '16px sans-serif';
+  ctx.font = `16px ${FONT_STACK}`;
   ctx.fillText(p.carrying.state, b.x + 68, b.y + 50, 76);
 }
 
@@ -107,7 +107,7 @@ function help(ctx, state) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#d8c09a';
-  ctx.font = '16px sans-serif';
+  ctx.font = `16px ${FONT_STACK}`;
   ctx.fillText('WASD/Arrows move   E use   Click walk+use   P pause', b.x + b.w / 2, b.y + 26);
   ctx.fillStyle = '#a89070';
   ctx.fillText('crate → chop → pan or steamer → plate → serve hatch', b.x + b.w / 2, b.y + 56);
@@ -133,12 +133,12 @@ function mute(ctx) {
     ctx.moveTo(cx + 18, cy - 6); ctx.lineTo(cx + 10, cy + 6); ctx.stroke();
   }
   ctx.fillStyle = '#ffe6b0';
-  ctx.font = 'bold 16px sans-serif';
+  ctx.font = `bold 16px ${FONT_STACK}`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
   ctx.fillText(on ? 'SOUND' : 'MUTED', b.x + 56, cy - 9);
   ctx.fillStyle = '#a89070';
-  ctx.font = '16px sans-serif';
+  ctx.font = `16px ${FONT_STACK}`;
   ctx.fillText('click', b.x + 56, cy + 11);
 }
 
@@ -146,17 +146,17 @@ function combo(ctx, state) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = 'rgba(255,150,40,0.95)';
-  ctx.font = 'bold 26px sans-serif';
+  ctx.font = `bold 26px ${FONT_STACK}`;
   ctx.fillText('x' + state.combo + ' COMBO', 640, 292);
   ctx.fillStyle = '#ffe6b0';
-  ctx.font = '16px sans-serif';
+  ctx.font = `16px ${FONT_STACK}`;
   ctx.fillText('tips +' + Math.round(state.combo * 10) + '%', 640, 316);
 }
 
 function toast(ctx, state) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.font = 'bold 18px sans-serif';
+  ctx.font = `bold 18px ${FONT_STACK}`;
   const w = ctx.measureText(state.toast).width + 28;
   ctx.fillStyle = 'rgba(20,10,6,0.85)';
   ctx.fillRect(640 - w / 2, 672, w, 28);
@@ -179,10 +179,10 @@ export function drawTitleScreen(ctx) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#ffd68a';
-  ctx.font = 'bold 64px sans-serif';
+  ctx.font = `bold 64px ${FONT_STACK}`;
   ctx.fillText('LANTERN TIDE', W / 2, 210);
   ctx.fillStyle = '#ff9c30';
-  ctx.font = '24px sans-serif';
+  ctx.font = `24px ${FONT_STACK}`;
   ctx.fillText('a night kitchen on the floating market', W / 2, 268);
   const lines = [
     'WASD or arrows — walk the two piers',
@@ -194,7 +194,7 @@ export function drawTitleScreen(ctx) {
     '',
     'press ENTER or click to open the kitchen',
   ];
-  ctx.font = '20px sans-serif';
+  ctx.font = `20px ${FONT_STACK}`;
   lines.forEach((l, i) => {
     ctx.fillStyle = i >= 6 ? '#ffe6b0' : '#c8b090';
     ctx.fillText(l, W / 2, 350 + i * 38);
@@ -208,10 +208,10 @@ export function drawPauseScreen(ctx) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#ffd68a';
-  ctx.font = 'bold 46px sans-serif';
+  ctx.font = `bold 46px ${FONT_STACK}`;
   ctx.fillText('PAUSED', W / 2, H / 2 - 20);
   ctx.fillStyle = '#c8a878';
-  ctx.font = '20px sans-serif';
+  ctx.font = `20px ${FONT_STACK}`;
   ctx.fillText('press P or ESC to keep cooking', W / 2, H / 2 + 40);
 }
 
@@ -226,13 +226,13 @@ export function drawWinScreen(ctx, state) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#ffd24a';
-  ctx.font = 'bold 56px sans-serif';
+  ctx.font = `bold 56px ${FONT_STACK}`;
   ctx.fillText('ALL SHIFTS CLEARED', W / 2, H / 2 - 70);
   ctx.fillStyle = '#ffe6b0';
-  ctx.font = '28px sans-serif';
+  ctx.font = `28px ${FONT_STACK}`;
   ctx.fillText('final score ' + (state.score || 0), W / 2, H / 2);
   ctx.fillStyle = '#c8a878';
-  ctx.font = '20px sans-serif';
+  ctx.font = `20px ${FONT_STACK}`;
   ctx.fillText('press ENTER to open a new night', W / 2, H / 2 + 70);
 }
 
@@ -243,12 +243,12 @@ export function drawLoseScreen(ctx, state) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillStyle = '#ff7a6a';
-  ctx.font = 'bold 52px sans-serif';
+  ctx.font = `bold 52px ${FONT_STACK}`;
   ctx.fillText('THE RAFT CLOSES', W / 2, H / 2 - 60);
   ctx.fillStyle = '#ffe6b0';
-  ctx.font = '26px sans-serif';
+  ctx.font = `26px ${FONT_STACK}`;
   ctx.fillText('score ' + (state.score || 0), W / 2, H / 2 + 10);
   ctx.fillStyle = '#c8a878';
-  ctx.font = '20px sans-serif';
+  ctx.font = `20px ${FONT_STACK}`;
   ctx.fillText('press ENTER to try the night again', W / 2, H / 2 + 70);
 }

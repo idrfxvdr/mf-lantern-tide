@@ -23,7 +23,7 @@ export function createStations() {
   }
   for (const s of STATIONS) {
     list.push({
-      id: s.id, type: s.type, x: s.x, y: s.y, r: s.r, label: s.label,
+      id: s.id, type: s.type, x: s.x, y: s.y, r: s.r, reach: s.reach || 130, label: s.label,
       contents: s.type === 'plate' ? [] : null, progress: 0, burning: false, burnTimer: 0,
     });
   }
@@ -53,10 +53,11 @@ export function stationUnder(mx, my, stations) {
 
 export function nearestStation(player, stations) {
   let best = null;
-  let bestD = 130;
+  let bestD = Infinity;
   for (const s of stations) {
+    const reach = s.reach || 130;
     const d = Math.hypot(player.x - s.x, player.y - s.y);
-    if (d < bestD) { best = s; bestD = d; }
+    if (d < reach && d < bestD) { best = s; bestD = d; }
   }
   return best;
 }
