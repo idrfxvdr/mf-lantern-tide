@@ -3,7 +3,7 @@
 import { STATIONS, FONT_STACK } from './layout.js';
 import { drawPlate } from './drawFood.js';
 
-const S = { text: '#ffe0a8', woodDark: '#3d2410' };
+const S = { text: '#FFF3D6', woodDark: '#3d2410' };
 
 export function drawService(ctx, state) {
   for (const s of STATIONS) {
@@ -121,5 +121,5 @@ function trash(ctx, s) {
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText('X', s.x, s.y);
-  label(ctx, s, '#ffb0b0');
+  label(ctx, s);
 }

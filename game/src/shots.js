@@ -118,13 +118,21 @@ export function setupShot(g, n) {
     const chop = g.stations.find((s) => s.id === 'chop_board');
     chop.contents = { ing: 'cabbage', state: 'chopped' };
     chop.progress = 0.82;
+    const pan = g.stations.find((s) => s.id === 'stove_pan');
+    pan.contents = { ing: 'fish', state: 'fried' };
+    pan.progress = 0.6;
+    const steamer = g.stations.find((s) => s.id === 'steamer_pot');
+    steamer.contents = { ing: 'rice', state: 'steamed' };
+    steamer.progress = 0.45;
     const plate = g.stations.find((s) => s.id === 'plate_counter');
     plate.contents = [{ ing: 'cabbage', state: 'chopped' }, { ing: 'mushroom', state: 'chopped' }];
     plate.ghost = null;
     g.spotlight = { x: 150, y: 520, r: 150 };
     g.particles.emitChop(150, 512);
+    g.particles.emitChop(168, 520);
     g.particles.emitSteam(1120, 470);
     g.particles.emitSteam(900, 220);
+    g.particles.emitSteam(1100, 220);
   } else {
     // Shift result: warm card over the still-visible kitchen.
     g.screen = 'shiftResult';

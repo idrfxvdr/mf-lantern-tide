@@ -2,7 +2,8 @@
 // plank), moored boats in the channel, lanterns and their reflections.
 import { PIER, CHANNEL, FONT_STACK } from './layout.js';
 
-const WOOD = { dark: '#2a1808', mid: '#4a2e14', light: '#6b4422', top: '#8a5a30', rope: '#8a7048' };
+// Wood base colours lightened ~35% so the floor reads clearly under the lantern light.
+const WOOD = { dark: '#39200b', mid: '#643e1b', light: '#905c2e', top: '#ba7a41', rope: '#ba9761' };
 
 export function drawPiers(ctx, state) {
   const t = state.time || 0;
@@ -11,6 +12,21 @@ export function drawPiers(ctx, state) {
   drawCrossing(ctx, state);
   boat(ctx, 578, 618, 78, t);
   boat(ctx, 700, 664, 54, t + 2.1);
+  plankSeams(ctx);
+}
+
+// Vertical plank joints across the empty floor bands (between the crates and CHOP on
+// the left, and between the stations on the right) so those stretches are not blank.
+function plankSeams(ctx) {
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,0.18)';
+  ctx.lineWidth = 1;
+  const seam = (x, y0, y1) => {
+    ctx.beginPath(); ctx.moveTo(x, y0); ctx.lineTo(x, y1); ctx.stroke();
+  };
+  for (let x = 70; x <= 500; x += 42) seam(x, 426, 460);
+  for (let x = 786; x <= 1220; x += 44) seam(x, 334, 396);
+  ctx.restore();
 }
 
 function drawPier(ctx, P, t, isRight) {

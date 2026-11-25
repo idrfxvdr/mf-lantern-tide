@@ -51,8 +51,8 @@ export function drawCrates(ctx, state) {
     ctx.fillStyle = '#c08a4a';
     ctx.fillRect(x - 4, y - 5, c.w + 8, 3);
 
-    // Label directly under the crate
-    ctx.fillStyle = '#ffe0a8';
+    // Label directly under the crate, full-strength cream so it always reads.
+    ctx.fillStyle = '#FFF3D6';
     ctx.font = `bold 17px ${FONT_STACK}`;
     ctx.textAlign = 'center';
     ctx.textBaseline = 'top';

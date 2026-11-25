@@ -1,11 +1,13 @@
 // drawFood.js - hand-drawn-looking food, canvas 2D only.
 import { INGREDIENTS } from './recipes.js';
 
+// Cooked-state tint. Steamed keeps each ingredient's own colour (rice stays warm
+// white, not lilac); only fried and burned override it.
 const COOK = {
   raw: null,
   chopped: null,
   fried: '#c8860a',
-  steamed: '#e6c2cc',
+  steamed: null,
   burned: '#2b2b2b',
 };
 

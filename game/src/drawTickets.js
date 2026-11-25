@@ -98,8 +98,8 @@ function ticket(ctx, b, order) {
   ctx.beginPath(); ctx.ellipse(dx, dy, I.dish.rx, I.dish.ry, 0, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = '#c9bb9a'; ctx.lineWidth = 2; ctx.stroke();
   r.steps.slice(0, 3).forEach((s, j) => {
-    const ox = (j - (Math.min(r.steps.length, 3) - 1) / 2) * 20;
-    drawFoodItem(ctx, dx + ox, dy - 3, s.ing, s.state, 26);
+    const ox = (j - (Math.min(r.steps.length, 3) - 1) / 2) * 22;
+    drawFoodItem(ctx, dx + ox, dy - 3, s.ing, s.state, 32);
   });
 
   // Ingredient icons with state glyphs

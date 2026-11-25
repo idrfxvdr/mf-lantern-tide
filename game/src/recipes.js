@@ -2,7 +2,7 @@
 // A recipe is a multiset of (ingredient, state) steps; the plate may be assembled in any order.
 
 export const INGREDIENTS = {
-  rice:     { name: 'Rice',     color: '#f5f0e0', accent: '#d4cbb0' },
+  rice:     { name: 'Rice',     color: '#FFF6E5', accent: '#c7c2b6' },
   fish:     { name: 'Fish',     color: '#a8d8ea', accent: '#7ab8cc' },
   shrimp:   { name: 'Shrimp',   color: '#ffb7b2', accent: '#e8908a' },
   cabbage:  { name: 'Cabbage',  color: '#82c98a', accent: '#5ba868' },

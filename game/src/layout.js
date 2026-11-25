@@ -107,8 +107,8 @@ export const TICKETS = [
 // renderer and the overlap checker so the name, dish, icons, bar and price never collide.
 export const TICKET_INNER = {
   name:  { x: 10, y: 6,  w: 230, h: 24 },
-  dish:  { cx: 42, cy: 54, rx: 34, ry: 15 },
-  icons: { x: 92, y: 48, step: 46, size: 28, stateY: 62 },
+  dish:  { cx: 40, cy: 54, rx: 32, ry: 15 },
+  icons: { x: 92, y: 50, step: 46, size: 40, stateY: 64 },
   bar:   { x: 10, y: 82, w: 146, h: 9 },
   price: { x: 180, y: 78, w: 60, h: 18 },
 };
@@ -126,12 +126,21 @@ export const PROPS = [
   { kind: 'bollard', x: 52,   y: 590 },
   { kind: 'bollard', x: 1228, y: 590 },
   { kind: 'brazier', x: 398,  y: 676 },
+  // Dressing for the empty floor: a spice shelf between the crates and CHOP, two
+  // hanging utensil racks and a lantern post between the right-pier stations.
+  { kind: 'spice_shelf',  x: 300,  y: 442 },
+  { kind: 'utensil_rack', x: 1000, y: 208 },
+  { kind: 'utensil_rack', x: 1018, y: 360 },
+  { kind: 'lantern_post', x: 1002, y: 458 },
 ];
 
 // Bounding box of a prop, used by overlap.mjs (a brazier is taller than it is wide).
 export function propBox(p) {
   if (p.kind === 'bollard') return { x: p.x - 10, y: p.y - 28, w: 20, h: 32 };
   if (p.kind === 'brazier') return { x: p.x - 26, y: p.y - 34, w: 52, h: 50 };
+  if (p.kind === 'spice_shelf') return { x: p.x - 75, y: p.y - 17, w: 150, h: 34 };
+  if (p.kind === 'utensil_rack') return { x: p.x - 34, y: p.y - 44, w: 68, h: 88 };
+  if (p.kind === 'lantern_post') return { x: p.x - 15, y: p.y - 52, w: 30, h: 96 };
   const s = p.s || 26;
   return { x: p.x - s, y: p.y - s, w: s * 2, h: s * 1.6 };
 }
@@ -168,7 +177,7 @@ export function ticketInnerBoxes(t) {
   return {
     name: { x: t.x + I.name.x, y: t.y + I.name.y, w: I.name.w, h: I.name.h },
     dish: { x: t.x + I.dish.cx - I.dish.rx, y: t.y + I.dish.cy - I.dish.ry, w: I.dish.rx * 2, h: I.dish.ry * 2 },
-    icons: { x: t.x + I.icons.x - I.icons.size / 2, y: t.y + I.icons.y - I.icons.size / 2, w: I.icons.step * 2 + I.icons.size, h: I.icons.size + 10 },
+    icons: { x: t.x + I.icons.x - I.icons.size / 2, y: t.y + I.icons.y - I.icons.size / 2, w: I.icons.step * 2 + I.icons.size, h: I.icons.size + 4 },
     bar: { x: t.x + I.bar.x, y: t.y + I.bar.y, w: I.bar.w, h: I.bar.h },
     price: { x: t.x + I.price.x, y: t.y + I.price.y, w: I.price.w, h: I.price.h },
   };

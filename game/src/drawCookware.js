@@ -4,7 +4,7 @@ import { STATIONS, FONT_STACK } from './layout.js';
 import { drawFoodItem } from './drawFood.js';
 import { drawService } from './drawService.js';
 
-const S = { text: '#ffe0a8', green: '#4ade80', red: '#ff5555', woodDark: '#3d2410' };
+const S = { text: '#FFF3D6', green: '#4ade80', red: '#ff5555', woodDark: '#3d2410' };
 
 export function drawCookware(ctx, state) {
   for (const s of STATIONS) {

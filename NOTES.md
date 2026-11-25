@@ -48,8 +48,8 @@ shorten the shift and patience, and raise the number of orders needed.
 
 ## What was tested (true results)
 
-- `node overlap.mjs` → **OK**: 49 HUD/ticket/clock/crate/station boxes, no intersections,
-  all inside 1280×800.
+- `node overlap.mjs` → **OK**: 67 HUD/ticket/clock/crate/station/prop boxes, no
+  intersections, all inside 1280×800 (the four new floor props are in the table too).
 - `node test.mjs` → **20 passed, 0 failed**:
   - one served order for each of the 8 recipes through the real `serve()` path;
   - pan fries then burns (raw fish → fried → burned);
@@ -60,12 +60,27 @@ shorten the shift and patience, and raise the number of orders needed.
   - **real headless Chromium** (`?test=1`) cooks a Tide Rice from crate → steamer → plate →
     hatch using only synthetic keyboard events, with **no console error**.
 - Screenshots captured from the real game at 1280×800 with `chromium --headless=new`:
-  `1-kitchen.png` (198,230 B), `2-rush.png` (196,733 B), `3-plating.png` (198,102 B),
-  `4-result.png` (138,877 B). All are PNG, 1280×800, under 256 KiB.
-- Pixel statistics (code, not visual): mean luminance 60 / 60 / 47 / 34, so no shot is blank
-  or black; the result card is warm and the kitchen stays visible behind it.
+  `1-kitchen.png` (198,628 B), `2-rush.png` (196,947 B), `3-plating.png` (217,744 B),
+  `4-result.png` (152,346 B). All are PNG, 1280×800, under 256 KiB.
+- Pixel statistics (code, not visual): mean luminance 71 / 71 / 72 / 46, so no shot is blank
+  or black; the kitchen is now evenly lit (round 4: the night overlay was cut to alpha 0.12
+  and the wood lightened ~35%, so the floor, crates, stations and labels all read — shot 3's
+  left pier mean 78, right pier mean 73, 0% dark pixels in both, no longer only the chef lit).
 - Partial plates are rejected: serving with only half the required steps returns `null` and
   leaves `servedThisShift` at 0 (asserted for every recipe in `test.mjs`).
+
+## Round 4 polish (this pass)
+
+- Lighting: the spotlight is now a warm (255,190,110) light pool and the vignette is capped
+  at alpha 0.12; pier/crate wood base colours are ~35% lighter; station and crate labels are
+  full-strength cream `#FFF3D6`.
+- Rice (raw and steamed) is warm white `#FFF6E5` with soft grey grain marks (no more lilac).
+- Empty floor filled: plank seams between the crates and CHOP and between the right-pier
+  stations, plus a spice shelf, two hanging utensil racks and a lantern post (all in the
+  layout table, clear of every hit area and label).
+- Tickets: ingredient icons 40px, dish picture 64px.
+- Shot 3 shows food in the pan and steamer with progress rings, a cleaver mid-chop with
+  flying pieces, and the chef at the side of the board.
 
 ## Still weak / honest caveats
 
@@ -74,7 +89,7 @@ shorten the shift and patience, and raise the number of orders needed.
 - Balance is unproven by play: shift 1 needs 3 orders in 62 s, shift 5 needs 7 in 38 s, and
   the mid-tide no-crossing window can strand a run. It may be too tight or too loose.
 - Audio was not listened to; the effects are synthesised but their mix is unverified.
-- The result card is intentionally dark-warm; it measured mean luminance 34 (not black).
+- The result card is intentionally dark-warm; it measured mean luminance 46 (not black).
 - No touch/mobile layout; the canvas is fixed at 1280×800 and scales down.
 - `assembly.js` is real (plate signatures and add/remove), but there is no separate
   assembler animation; plating is instant.
