@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lantern Tide</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0a1628; overflow: hidden; font-family: monospace; }
+    canvas { display: block; image-rendering: pixelated; }
+    #muteBtn {
+      position: fixed; top: 10px; right: 10px; z-index: 100;
+      background: rgba(20,60,100,0.8); color: #ffd27d; border: 2px solid #7aadff;
+      padding: 6px 12px; cursor: pointer; font-family: monospace; font-size: 14px;
+      border-radius: 4px;
+    }
+    #muteBtn:hover { background: rgba(40,100,180,0.9); }
+  </style>
+</head>
+<body>
+  <button id="muteBtn">MUTE</button>
+  <canvas id="c"></canvas>
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>
