@@ -74,7 +74,7 @@ export const STAND = {
   trash:         { x: 390,  y: 600 },
   stove_pan:     { x: 830,  y: 300 },
   steamer_pot:   { x: 1020, y: 300 },
-  plate_counter: { x: 820,  y: 530 },
+  plate_counter: { x: 790,  y: 555 },
   serve_window:  { x: 1050, y: 545 },
 };
 

@@ -53,7 +53,7 @@ export function stationUnder(mx, my, stations) {
 
 export function nearestStation(player, stations) {
   let best = null;
-  let bestD = 100;
+  let bestD = 130;
   for (const s of stations) {
     const d = Math.hypot(player.x - s.x, player.y - s.y);
     if (d < bestD) { best = s; bestD = d; }
@@ -130,7 +130,7 @@ export function interactWithStation(station, player) {
 
 export function updateStations(stations, dt) {
   for (const s of stations) {
-    if (s.type !== ST.CHOP && s.type !== ST.STOVE && s.type !== ST.STEAMER) continue;
+    if (s.type !== ST.STOVE && s.type !== ST.STEAMER) continue;
     if (!s.contents) continue;
     if (s.progress < 1) {
       s.progress = Math.min(1, s.progress + dt / COOK_TIME);

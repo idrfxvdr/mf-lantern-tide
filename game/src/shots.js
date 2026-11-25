@@ -45,7 +45,7 @@ export function setupShot(g, n) {
       ticket(RECIPES[6], 0.12, 40, 3),
     ];
     g.tide.setTime(18); // high tide: the drifting bridge is the visual centre
-    setPlayer(g, 820, 530, 1);
+    setPlayer(g, 790, 555, 1);
     g.player.carrying = { ing: 'shrimp', state: 'chopped', stepIdx: 0, recipeId: null };
     const plate = g.stations.find((s) => s.id === 'plate_counter');
     plate.contents = [{ ing: 'rice', state: 'steamed' }, { ing: 'nori', state: 'raw' }];
@@ -144,7 +144,7 @@ export function setupShot(g, n) {
       { id: 'r3', recipe: RECIPES[6], served: true, failed: false, patience: 0, maxPatience: 1 },
       { id: 'r4', recipe: RECIPES[7], served: false, failed: true, patience: 0, maxPatience: 1 },
     ];
-    setPlayer(g, 820, 530, 1);
+    setPlayer(g, 790, 555, 1);
     g.player.carrying = null;
     const hatch = g.stations.find((s) => s.id === 'serve_window');
     hatch.contents = [{ ing: 'rice', state: 'steamed' }, { ing: 'fish', state: 'chopped' }];

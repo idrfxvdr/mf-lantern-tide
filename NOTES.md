@@ -60,10 +60,12 @@ shorten the shift and patience, and raise the number of orders needed.
   - **real headless Chromium** (`?test=1`) cooks a Tide Rice from crate → steamer → plate →
     hatch using only synthetic keyboard events, with **no console error**.
 - Screenshots captured from the real game at 1280×800 with `chromium --headless=new`:
-  `1-kitchen.png` (196,910 B), `2-rush.png` (196,733 B), `3-plating.png` (198,102 B),
+  `1-kitchen.png` (198,230 B), `2-rush.png` (196,733 B), `3-plating.png` (198,102 B),
   `4-result.png` (138,877 B). All are PNG, 1280×800, under 256 KiB.
 - Pixel statistics (code, not visual): mean luminance 60 / 60 / 47 / 34, so no shot is blank
   or black; the result card is warm and the kitchen stays visible behind it.
+- Partial plates are rejected: serving with only half the required steps returns `null` and
+  leaves `servedThisShift` at 0 (asserted for every recipe in `test.mjs`).
 
 ## Still weak / honest caveats
 

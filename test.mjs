@@ -9,6 +9,7 @@ import { spawn } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { newGame, startShift, updateGame, serve, SHIFTS } from './game/src/game.js';
 import { interactWithStation, updateStations, COOK_TIME, BURN_TIME } from './game/src/stations.js';
+import { addToPlate } from './game/src/assembly.js';
 import { RECIPES, INGREDIENTS } from './game/src/recipes.js';
 import { planPath } from './game/src/pathing.js';
 import { Tide } from './game/src/tide.js';
@@ -33,6 +34,10 @@ function orderFor(recipe, patience = 60) {
   return { id: 'test_' + recipe.id, recipe, patience, maxPatience: patience, served: false, failed: false };
 }
 
+function platesteps(g, plate, steps) {
+  for (const s of steps) addToPlate(plate.contents, { ing: s.ing, state: s.state });
+}
+
 // 1. One served order for every recipe, through the real serve() path.
 for (const recipe of RECIPES) {
   const g = fresh(1);
@@ -41,10 +46,14 @@ for (const recipe of RECIPES) {
   g.orderManager.spawnTimer = 999;
   g.orders = [order];
   const plate = g.stations.find((s) => s.id === 'plate_counter');
-  plate.contents = recipe.steps.map((s) => ({ ing: s.ing, state: s.state }));
+  const steps = recipe.steps;
+  const half = Math.floor(steps.length / 2);
+  platesteps(g, plate, steps.slice(0, half));
+  const partial = serve(g) === null && g.servedThisShift === 0;
+  platesteps(g, plate, steps);
   const result = serve(g);
-  check('serve ' + recipe.name, !!result && g.servedThisShift === 1 && g.score > 0,
-    result ? '+' + g.score + ' pts' : 'no match');
+  check('serve ' + recipe.name, partial && !!result && g.servedThisShift === 1 && g.score > 0,
+    'partial accepted? ' + !partial + (result ? '  +' + g.score + ' pts' : '  no match'));
 }
 
 // 2. Burn one pan: raw fish -> fried -> burned after COOK_TIME + BURN_TIME.
