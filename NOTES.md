@@ -48,8 +48,10 @@ shorten the shift and patience, and raise the number of orders needed.
 
 ## What was tested (true results)
 
-- `node overlap.mjs` → **OK**: 67 HUD/ticket/clock/crate/station/prop boxes, no
-  intersections, all inside 1280×800 (the four new floor props are in the table too).
+- `node overlap.mjs` → **OK**: 95 HUD/ticket/clock/crate/station/prop boxes, no
+  intersections, all inside 1280×800. Tickets are now checked down to each individual
+  ingredient icon and the state glyph under it (icons against each other and against the
+  64px plate box).
 - `node test.mjs` → **20 passed, 0 failed**:
   - one served order for each of the 8 recipes through the real `serve()` path;
   - pan fries then burns (raw fish → fried → burned);
@@ -60,14 +62,30 @@ shorten the shift and patience, and raise the number of orders needed.
   - **real headless Chromium** (`?test=1`) cooks a Tide Rice from crate → steamer → plate →
     hatch using only synthetic keyboard events, with **no console error**.
 - Screenshots captured from the real game at 1280×800 with `chromium --headless=new`:
-  `1-kitchen.png` (198,628 B), `2-rush.png` (196,947 B), `3-plating.png` (217,744 B),
+  `1-kitchen.png` (203,102 B), `2-rush.png` (201,038 B), `3-plating.png` (223,256 B),
   `4-result.png` (152,346 B). All are PNG, 1280×800, under 256 KiB.
 - Pixel statistics (code, not visual): mean luminance 71 / 71 / 72 / 46, so no shot is blank
   or black; the kitchen is now evenly lit (round 4: the night overlay was cut to alpha 0.12
   and the wood lightened ~35%, so the floor, crates, stations and labels all read — shot 3's
   left pier mean 78, right pier mean 73, 0% dark pixels in both, no longer only the chef lit).
+- Progress rings measured in the captured PNGs (colour-count probe on the ring band):
+  shot 1 pan = green, steamer = gold; shot 2 pan = green, steamer = gold; shot 3 pan = green,
+  steamer = gold — i.e. the pan reads 70 % cooking and the steamer reads ready in all three.
 - Partial plates are rejected: serving with only half the required steps returns `null` and
   leaves `servedThisShift` at 0 (asserted for every recipe in `test.mjs`).
+
+## Round 5 fixes (this pass)
+
+- Tickets: the dish now sits in its own 64px plate box at the left (x = ticket+10, y = ticket+4)
+  and the food is clipped to the plate ellipse, so picture and first icon no longer collide.
+  Ingredient icons are 34px, start at ticket+88 and are spread evenly over the remaining
+  width with a 6px minimum gap (4 icons: exactly 6px; 3 icons: 26px; 2: 86px). The state glyph
+  (knife / flame / steam / dot / X) is centred under each icon, 2px clear of it.
+  Name row, patience bar and price were re-seated in `TICKET_INNER` to make room.
+- Cookware rings: a dark 12px track with a bright 10px arc on top, clockwise from the top,
+  drawn outside the vessel (radius = station r + 12). Green `#5BE37D` while cooking, gold
+  `#FFD34D` when ready (plus a tick mark above the ring), red `#FF5A4D` when about to burn.
+- Shots 1, 2 and 3: pan set to 70 %, steamer set to ready.
 
 ## Round 4 polish (this pass)
 

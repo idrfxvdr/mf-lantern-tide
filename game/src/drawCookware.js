@@ -1,10 +1,12 @@
 // drawCookware.js - the chopping board, the wok on its flame and the bamboo steamer.
 // The plating counter, serving hatch and trash live in drawService.js.
 import { STATIONS, FONT_STACK } from './layout.js';
+import { BURN_TIME } from './stations.js';
 import { drawFoodItem } from './drawFood.js';
 import { drawService } from './drawService.js';
 
 const S = { text: '#FFF3D6', green: '#4ade80', red: '#ff5555', woodDark: '#3d2410' };
+const RING = { cook: '#5BE37D', ready: '#FFD34D', burn: '#FF5A4D', track: 'rgba(10,6,4,0.62)', gap: 12 };
 
 export function drawCookware(ctx, state) {
   for (const s of STATIONS) {
@@ -26,17 +28,44 @@ function label(ctx, s, color) {
   ctx.fillText(s.label, s.x, s.y + s.r + 20);
 }
 
-function ring(ctx, s, color) {
-  const rad = s.r + 13;
-  ctx.strokeStyle = 'rgba(0,0,0,0.4)';
-  ctx.lineWidth = 9;
-  ctx.beginPath(); ctx.arc(s.x, s.y, rad, 0, Math.PI * 2); ctx.stroke();
-  ctx.strokeStyle = color;
-  ctx.lineCap = 'round';
-  ctx.beginPath();
-  ctx.arc(s.x, s.y, rad, -Math.PI / 2, -Math.PI / 2 + Math.max(0.02, s.progress) * Math.PI * 2);
-  ctx.stroke();
+// Progress ring drawn outside the vessel: a dark 12px track, a bright 10px arc
+// clockwise from the top (green cooking, gold ready, red about to burn), plus a
+// tick mark at the top once the food is ready.
+function ring(ctx, s, st) {
+  const rad = s.r + RING.gap;
+  const frac = Math.max(0, Math.min(1, st ? st.progress || 0 : 0));
+  const ready = frac >= 1;
+  const aboutToBurn = ready && !st.burning && st.burnTimer > BURN_TIME * 0.5;
+  const burning = !!(st && st.burning);
+  const color = burning || aboutToBurn ? RING.burn : ready ? RING.ready : RING.cook;
+
+  ctx.save();
   ctx.lineCap = 'butt';
+  // Dark track.
+  ctx.strokeStyle = RING.track;
+  ctx.lineWidth = 12;
+  ctx.beginPath(); ctx.arc(s.x, s.y, rad, 0, Math.PI * 2); ctx.stroke();
+  // Bright arc, clockwise from the top.
+  if (frac > 0.002) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 10;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, rad, -Math.PI / 2, -Math.PI / 2 + frac * Math.PI * 2);
+    ctx.stroke();
+  }
+  // Ready tick just outside the top of the ring.
+  if (ready) {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 3.5;
+    ctx.lineCap = 'round';
+    const ty = s.y - rad;
+    ctx.beginPath();
+    ctx.moveTo(s.x - 8, ty - 10);
+    ctx.lineTo(s.x - 2, ty - 4);
+    ctx.lineTo(s.x + 8, ty - 16);
+    ctx.stroke();
+  }
+  ctx.restore();
 }
 
 function choppedBits(ctx, x, y, ing, n = 5) {
@@ -75,7 +104,7 @@ function chop(ctx, s, state) {
     if (st.contents.state === 'chopped') choppedBits(ctx, s.x - 8, s.y + 2, st.contents.ing, 5);
     else drawFoodItem(ctx, s.x - 10, s.y + 2, st.contents.ing, st.contents.state, 54);
   }
-  if (st && st.contents && st.progress > 0) ring(ctx, s, st.progress >= 1 ? S.green : '#ffb347');
+  if (st && st.contents) ring(ctx, s, st);
   label(ctx, s);
 }
 
@@ -105,7 +134,7 @@ function stove(ctx, s, state) {
   ctx.fillRect(s.x - s.r * 0.74 - 26, s.y - 7, 28, 14);
   ctx.fillRect(s.x + s.r * 0.74 - 2, s.y - 7, 28, 14);
   if (st && st.contents) drawFoodItem(ctx, s.x, s.y, st.contents.ing, st.contents.state, 64);
-  if (st && st.contents && st.progress > 0) ring(ctx, s, st.progress >= 1 ? S.green : '#ffb347');
+  if (st && st.contents) ring(ctx, s, st);
   label(ctx, s);
 }
 
@@ -127,6 +156,6 @@ function steamer(ctx, s, state) {
   ctx.fillRect(s.x - 16, s.y - s.r - 14, 32, 12);
   ctx.fillRect(s.x - 8, s.y - s.r - 24, 16, 12);
   if (st && st.contents) drawFoodItem(ctx, s.x, s.y, st.contents.ing, st.contents.state, 56);
-  if (st && st.contents && st.progress > 0) ring(ctx, s, st.progress >= 1 ? S.green : '#ffb347');
+  if (st && st.contents) ring(ctx, s, st);
   label(ctx, s);
 }

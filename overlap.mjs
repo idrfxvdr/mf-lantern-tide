@@ -4,7 +4,7 @@
 import {
   HUD, TICKETS, CRATES, STATIONS, TICKET_INNER, PROPS,
   crateBox, crateLabelBox, stationLabelBox, clockBox, clockLabelBox,
-  ticketInnerBoxes, propBox,
+  ticketInnerBoxes, ticketIconLayout, ticketStateBox, propBox,
 } from './game/src/layout.js';
 import { INGREDIENTS } from './game/src/recipes.js';
 
@@ -20,12 +20,17 @@ for (const [k, b] of Object.entries(HUD)) {
 // Tickets and their internal rows
 TICKETS.forEach((t, i) => {
   add('ticket' + i, t);
-  const inner = ticketInnerBoxes(t);
+  const inner = ticketInnerBoxes(t, 4);
   add('ticket' + i + '.name', inner.name, 'ticket' + i);
-  add('ticket' + i + '.dish', inner.dish, 'ticket' + i);
+  add('ticket' + i + '.plate', inner.plate, 'ticket' + i);
   add('ticket' + i + '.bar', inner.bar, 'ticket' + i);
   add('ticket' + i + '.price', inner.price, 'ticket' + i);
-  add('ticket' + i + '.icons', inner.icons, 'ticket' + i);
+  // Each icon and the state glyph under it, checked against each other and the plate.
+  const lay = ticketIconLayout(t, 4);
+  lay.boxes.forEach((ib, k) => {
+    add('ticket' + i + '.icon' + k, ib, 'ticket' + i);
+    add('ticket' + i + '.state' + k, ticketStateBox(ib), 'ticket' + i);
+  });
 });
 
 // Clock and its caption

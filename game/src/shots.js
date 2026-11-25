@@ -55,7 +55,7 @@ export function setupShot(g, n) {
     steamer.progress = 1;
     const pan = g.stations.find((s) => s.id === 'stove_pan');
     pan.contents = { ing: 'fish', state: 'fried' };
-    pan.progress = 0.72;
+    pan.progress = 0.7;
     const hatch = g.stations.find((s) => s.id === 'serve_window');
     hatch.contents = [{ ing: 'fish', state: 'chopped' }, { ing: 'rice', state: 'steamed' }];
     g.particles.emitSteam(1100, 214);
@@ -85,10 +85,10 @@ export function setupShot(g, n) {
     g.player.carrying = { ing: 'egg', state: 'fried', stepIdx: 0, recipeId: null };
     const pan = g.stations.find((s) => s.id === 'stove_pan');
     pan.contents = { ing: 'shrimp', state: 'fried' };
-    pan.progress = 0.9;
+    pan.progress = 0.7;
     const steamer = g.stations.find((s) => s.id === 'steamer_pot');
     steamer.contents = { ing: 'tofu', state: 'steamed' };
-    steamer.progress = 0.6;
+    steamer.progress = 1;
     const plate = g.stations.find((s) => s.id === 'plate_counter');
     plate.contents = [{ ing: 'mushroom', state: 'chopped' }];
     plate.ghost = [{ ing: 'cabbage', state: 'chopped' }];
@@ -120,10 +120,10 @@ export function setupShot(g, n) {
     chop.progress = 0.82;
     const pan = g.stations.find((s) => s.id === 'stove_pan');
     pan.contents = { ing: 'fish', state: 'fried' };
-    pan.progress = 0.6;
+    pan.progress = 0.7;
     const steamer = g.stations.find((s) => s.id === 'steamer_pot');
     steamer.contents = { ing: 'rice', state: 'steamed' };
-    steamer.progress = 0.45;
+    steamer.progress = 1;
     const plate = g.stations.find((s) => s.id === 'plate_counter');
     plate.contents = [{ ing: 'cabbage', state: 'chopped' }, { ing: 'mushroom', state: 'chopped' }];
     plate.ghost = null;

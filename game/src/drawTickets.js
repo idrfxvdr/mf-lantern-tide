@@ -1,6 +1,6 @@
 // drawTickets.js - four large paper order tickets along the top. Each ticket has its
 // own name row, dish picture, ingredient icons with a state glyph, patience bar and price.
-import { TICKETS, TICKET_INNER, FONT_STACK } from './layout.js';
+import { TICKETS, TICKET_INNER, FONT_STACK, ticketIconLayout } from './layout.js';
 import { drawFoodItem } from './drawFood.js';
 
 function rrect(ctx, x, y, w, h, r) {
@@ -92,22 +92,30 @@ function ticket(ctx, b, order) {
   ctx.textBaseline = 'top';
   ctx.fillText(r.name, b.x + I.name.x, b.y + I.name.y, I.name.w);
 
-  // Dish picture
-  const dx = b.x + I.dish.cx, dy = b.y + I.dish.cy;
-  ctx.fillStyle = '#efe6cf';
-  ctx.beginPath(); ctx.ellipse(dx, dy, I.dish.rx, I.dish.ry, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#c9bb9a'; ctx.lineWidth = 2; ctx.stroke();
-  r.steps.slice(0, 3).forEach((s, j) => {
-    const ox = (j - (Math.min(r.steps.length, 3) - 1) / 2) * 22;
-    drawFoodItem(ctx, dx + ox, dy - 3, s.ing, s.state, 32);
+  // Dish plate in its own 64px box at the left; the food is clipped inside the plate.
+  const pb = I.plate;
+  const pcx = b.x + pb.x + pb.size / 2;
+  const pcy = b.y + pb.y + pb.size / 2;
+  const prx = pb.size / 2 - 4, pry = prx * 0.62;
+  ctx.beginPath(); ctx.ellipse(pcx, pcy, prx, pry, 0, 0, Math.PI * 2);
+  ctx.fillStyle = '#f2ead6'; ctx.fill();
+  ctx.save();
+  ctx.beginPath(); ctx.ellipse(pcx, pcy, prx, pry, 0, 0, Math.PI * 2); ctx.clip();
+  const shown = Math.min(r.steps.length, 3);
+  r.steps.slice(0, shown).forEach((s, j) => {
+    const ox = (j - (shown - 1) / 2) * 20;
+    drawFoodItem(ctx, pcx + ox, pcy - 2, s.ing, s.state, 26);
   });
+  ctx.restore();
+  ctx.beginPath(); ctx.ellipse(pcx, pcy, prx, pry, 0, 0, Math.PI * 2);
+  ctx.strokeStyle = '#c9bb9a'; ctx.lineWidth = 2; ctx.stroke();
 
-  // Ingredient icons with state glyphs
-  r.steps.forEach((s, j) => {
-    const ix = b.x + I.icons.x + j * I.icons.step;
-    const iy = b.y + I.icons.y;
-    drawFoodItem(ctx, ix, iy, s.ing, s.state, I.icons.size);
-    stateIcon(ctx, ix, b.y + I.icons.stateY, s.state);
+  // Ingredient icons, evenly spread from ticket+88, with a state glyph under each one.
+  const lay = ticketIconLayout(b, r.steps.length);
+  r.steps.slice(0, lay.boxes.length).forEach((s, j) => {
+    const ib = lay.boxes[j];
+    drawFoodItem(ctx, ib.cx, ib.y + ib.h / 2, s.ing, s.state, lay.size);
+    stateIcon(ctx, ib.cx, ib.y + ib.h + I.state.dy + I.state.h / 2, s.state);
   });
 
   // Patience bar

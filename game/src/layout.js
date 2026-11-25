@@ -104,14 +104,48 @@ export const TICKETS = [
 ];
 
 // Ticket internal layout, relative to each ticket's top-left. Shared by the
-// renderer and the overlap checker so the name, dish, icons, bar and price never collide.
+// renderer and the overlap checker so the name, plate, icons, bar and price never collide.
+// The dish plate owns a 64px box on the left; the ingredient icons start at x=88 and
+// are spread evenly over the rest of the ticket, never closer than 6px to each other.
 export const TICKET_INNER = {
-  name:  { x: 10, y: 6,  w: 230, h: 24 },
-  dish:  { cx: 40, cy: 54, rx: 32, ry: 15 },
-  icons: { x: 92, y: 50, step: 46, size: 40, stateY: 64 },
-  bar:   { x: 10, y: 82, w: 146, h: 9 },
+  plate: { x: 10, y: 4, size: 64 },
+  name:  { x: 88, y: 4,  w: 148, h: 20 },
+  icons: { x: 88, y: 44, size: 34, gap: 6, right: 8, max: 4 },
+  state: { dy: 2, w: 20, h: 14 },   // glyph box under each icon (icon bottom + dy)
+  bar:   { x: 10, y: 84, w: 146, h: 8 },
   price: { x: 180, y: 78, w: 60, h: 18 },
 };
+
+// Icon row geometry for a ticket holding `n` steps: 34px icons, evenly spread from
+// ticket+88 to the right margin, at least 6px apart. Returns the icon boxes.
+export function ticketIconLayout(t, n) {
+  const I = TICKET_INNER;
+  const avail = t.w - I.icons.right - I.icons.x;
+  const count = Math.max(1, Math.min(n || 1, I.icons.max));
+  let size = I.icons.size;
+  let gap = count > 1 ? (avail - count * size) / (count - 1) : 0;
+  if (gap < I.icons.gap) {
+    gap = I.icons.gap;
+    size = Math.min(size, (avail - gap * (count - 1)) / count);
+  }
+  const y = t.y + I.icons.y - size / 2;
+  const boxes = [];
+  for (let i = 0; i < count; i++) {
+    boxes.push({ x: t.x + I.icons.x + i * (size + gap), y, w: size, h: size, cx: t.x + I.icons.x + i * (size + gap) + size / 2 });
+  }
+  return { size, gap, boxes };
+}
+
+// Glyph box under icon i: centred on the icon, hanging below it without touching it.
+export function ticketStateBox(iconBox) {
+  const I = TICKET_INNER;
+  return { x: iconBox.cx - I.state.w / 2, y: iconBox.y + iconBox.h + I.state.dy, w: I.state.w, h: I.state.h };
+}
+
+export function ticketPlateBox(t) {
+  const p = TICKET_INNER.plate;
+  return { x: t.x + p.x, y: t.y + p.y, w: p.size, h: p.size };
+}
 
 // Decoration on the lower piers. Declared here so drawProps.js draws from the same
 // table overlap.mjs checks against: nothing may sit on a label.
@@ -172,12 +206,14 @@ export function clockLabelBox() {
   return { x: c.x - w / 2, y: c.y + c.r + 10, w, h: FONT.label + 4 };
 }
 
-export function ticketInnerBoxes(t) {
+export function ticketInnerBoxes(t, steps = 4) {
   const I = TICKET_INNER;
+  const icons = ticketIconLayout(t, steps).boxes;
+  const first = icons[0], last = icons[icons.length - 1];
   return {
     name: { x: t.x + I.name.x, y: t.y + I.name.y, w: I.name.w, h: I.name.h },
-    dish: { x: t.x + I.dish.cx - I.dish.rx, y: t.y + I.dish.cy - I.dish.ry, w: I.dish.rx * 2, h: I.dish.ry * 2 },
-    icons: { x: t.x + I.icons.x - I.icons.size / 2, y: t.y + I.icons.y - I.icons.size / 2, w: I.icons.step * 2 + I.icons.size, h: I.icons.size + 4 },
+    plate: ticketPlateBox(t),
+    icons: { x: first.x, y: first.y, w: last.x + last.w - first.x, h: I.icons.size },
     bar: { x: t.x + I.bar.x, y: t.y + I.bar.y, w: I.bar.w, h: I.bar.h },
     price: { x: t.x + I.price.x, y: t.y + I.price.y, w: I.price.w, h: I.price.h },
   };
