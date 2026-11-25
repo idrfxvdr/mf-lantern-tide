@@ -1,13 +1,18 @@
-// WebAudio synthesized sounds for Lantern Tide
+// WebAudio synthesized sounds for Lantern Tide. Safe to import in Node (headless
+// tests): every entry point becomes a no-op when there is no AudioContext.
 let ctx = null;
 let muted = false;
+const hasAudio = typeof window !== 'undefined' && !!(window.AudioContext || window.webkitAudioContext);
 
 export function initAudio() {
-  ctx = new (window.AudioContext || window.webkitAudioContext)();
+  if (!hasAudio || ctx) return;
+  try { ctx = new (window.AudioContext || window.webkitAudioContext)(); } catch { ctx = null; }
 }
 
 function getCtx() {
+  if (!hasAudio) return null;
   if (!ctx) initAudio();
+  if (!ctx) return null;
   if (ctx.state === 'suspended') ctx.resume();
   return ctx;
 }
@@ -15,6 +20,7 @@ function getCtx() {
 function beep(freq, duration, type = 'sine', gain = 0.3, attack = 0.01, decay = 0.05) {
   if (muted) return;
   const c = getCtx();
+  if (!c) return;
   const osc = c.createOscillator();
   const g = c.createGain();
   osc.connect(g);
@@ -32,6 +38,7 @@ function beep(freq, duration, type = 'sine', gain = 0.3, attack = 0.01, decay = 
 function noise(duration, gain = 0.2) {
   if (muted) return;
   const c = getCtx();
+  if (!c) return;
   const buf = c.createBuffer(1, c.sampleRate * duration, c.sampleRate);
   const data = buf.getChannelData(0);
   for (let i = 0; i < data.length; i++) data[i] = Math.random() * 2 - 1;

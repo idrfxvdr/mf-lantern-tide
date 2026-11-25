@@ -1,4 +1,5 @@
-// drawCrates.js - ingredient crates with food heaped in them, labels directly underneath.
+// drawCrates.js - ingredient crates with the food sitting down inside them,
+// labels directly underneath, all positioned from layout.js.
 import { CRATES } from './layout.js';
 import { INGREDIENTS } from './recipes.js';
 import { drawFoodItem } from './drawFood.js';
@@ -13,35 +14,42 @@ export function drawCrates(ctx, state) {
     ctx.fillStyle = 'rgba(0,0,0,0.35)';
     ctx.fillRect(x + 6, y + 8, c.w, c.h);
 
-    // Wooden crate body
-    const g = ctx.createLinearGradient(0, y, 0, y + c.h);
-    g.addColorStop(0, '#9a6a38');
-    g.addColorStop(0.35, '#6b4422');
-    g.addColorStop(1, '#452a12');
-    ctx.fillStyle = g;
+    // Back of the crate
+    const back = ctx.createLinearGradient(0, y, 0, y + c.h);
+    back.addColorStop(0, '#7a5028');
+    back.addColorStop(1, '#3a2410');
+    ctx.fillStyle = back;
     ctx.fillRect(x, y, c.w, c.h);
 
-    // Food heaped above the rim
+    // Food heaped down inside the crate (clipped so it never crosses the rim)
     ctx.save();
     ctx.beginPath();
-    ctx.rect(x, y - 26, c.w, c.h + 26);
+    ctx.rect(x + 5, y + 7, c.w - 10, c.h * 0.66);
     ctx.clip();
-    drawFoodItem(ctx, c.x - 22, y + 4, c.ing, 'raw', 48);
-    drawFoodItem(ctx, c.x + 20, y + 2, c.ing, 'raw', 52);
-    drawFoodItem(ctx, c.x, y - 14, c.ing, 'raw', 50);
+    drawFoodItem(ctx, c.x - 24, y + 34, c.ing, 'raw', 46);
+    drawFoodItem(ctx, c.x + 22, y + 30, c.ing, 'raw', 50);
+    drawFoodItem(ctx, c.x - 2, y + 16, c.ing, 'raw', 48);
     ctx.restore();
 
-    // Front slats and rim
+    // Front panel with thickness, drawn over the lower food
+    const front = ctx.createLinearGradient(0, y + c.h * 0.5, 0, y + c.h);
+    front.addColorStop(0, '#8a5a30');
+    front.addColorStop(1, '#4a2c14');
+    ctx.fillStyle = front;
+    ctx.fillRect(x, y + c.h * 0.54, c.w, c.h * 0.46);
     ctx.strokeStyle = '#3d2410';
-    ctx.lineWidth = 4;
+    ctx.lineWidth = 3;
     ctx.strokeRect(x, y, c.w, c.h);
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.moveTo(x, y + c.h * 0.42); ctx.lineTo(x + c.w, y + c.h * 0.42);
-    ctx.moveTo(x, y + c.h * 0.74); ctx.lineTo(x + c.w, y + c.h * 0.74);
+    ctx.moveTo(x, y + c.h * 0.72); ctx.lineTo(x + c.w, y + c.h * 0.72);
     ctx.stroke();
+
+    // Top rim
     ctx.fillStyle = '#a8763f';
-    ctx.fillRect(x - 4, y - 6, c.w + 8, 10);
+    ctx.fillRect(x - 4, y - 5, c.w + 8, 11);
+    ctx.fillStyle = '#c08a4a';
+    ctx.fillRect(x - 4, y - 5, c.w + 8, 3);
 
     // Label directly under the crate
     ctx.fillStyle = '#ffe0a8';

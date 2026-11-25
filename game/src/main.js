@@ -1,10 +1,11 @@
-// main.js - canvas bootstrap, input, rendering and the frame loop.
-import { W, H } from './layout.js';
+// main.js - canvas bootstrap, input, rendering, the frame loop and the headless hooks.
+import { W, H, HUD } from './layout.js';
 import { newGame, startShift, updateGame, interact, clickAt, move, SHIFTS } from './game.js';
 import { drawKitchen } from './drawKitchen.js';
 import { drawHUD, drawTitleScreen, drawPauseScreen, drawShiftResult, drawWinScreen, drawLoseScreen } from './hud.js';
-import { setupInput, keys, wasKeyPressed, consumeKeys } from './input.js';
+import { setupInput, wasKeyPressed, consumeKeys, keys } from './input.js';
 import { setupShot } from './shots.js';
+import { runSelfTest } from './selftest.js';
 import * as Audio from './audio.js';
 
 const canvas = document.getElementById('c');
@@ -14,13 +15,13 @@ canvas.height = H;
 
 const params = new URLSearchParams(location.search);
 const shot = parseInt(params.get('shot') || '0', 10);
+const testMode = params.get('test') === '1';
 
-const muteBtn = document.getElementById('muteBtn');
-muteBtn.addEventListener('click', () => {
-  const m = Audio.isMuted();
-  Audio.setMuted(!m);
-  muteBtn.textContent = m ? 'SOUND OFF' : 'SOUND ON';
-});
+// Surface any runtime error so the headless test can fail loudly.
+const errors = [];
+window.__errors = errors;
+window.addEventListener('error', (e) => errors.push(String(e.message || e.error)));
+window.addEventListener('unhandledrejection', (e) => errors.push(String(e.reason)));
 
 setupInput(canvas);
 
@@ -32,6 +33,10 @@ function toCanvas(e) {
   return { x: (e.clientX - r.left) * (W / r.width), y: (e.clientY - r.top) * (H / r.height) };
 }
 
+function inBox(p, b) {
+  return p.x >= b.x && p.x <= b.x + b.w && p.y >= b.y && p.y <= b.y + b.h;
+}
+
 canvas.addEventListener('mousemove', (e) => {
   const p = toCanvas(e);
   g.mouseX = p.x;
@@ -39,8 +44,13 @@ canvas.addEventListener('mousemove', (e) => {
 });
 
 canvas.addEventListener('click', (e) => {
-  Audio.initAudio();
+  if (!Audio.isMuted()) Audio.initAudio();
   const p = toCanvas(e);
+  if (inBox(p, HUD.mute)) {
+    const m = Audio.isMuted();
+    Audio.setMuted(!m);
+    return;
+  }
   if (g.screen === 'title') return startShift(g, 1);
   if (g.screen === 'shiftResult') return startShift(g, g.shiftPassed ? Math.min(SHIFTS, g.currentShift + 1) : g.currentShift);
   if (g.screen === 'win' || g.screen === 'lose') {
@@ -66,11 +76,13 @@ function screenInput() {
   }
 }
 
-function playInput() {
-  if (wasKeyPressed('up')) move(g, 0, -34);
-  if (wasKeyPressed('down')) move(g, 0, 34);
-  if (wasKeyPressed('left')) move(g, -34, 0);
-  if (wasKeyPressed('right')) move(g, 34, 0);
+function playInput(dt) {
+  // Held keys walk continuously; E / Space act once per press.
+  const speed = 330 * dt;
+  if (keys.up) move(g, 0, -speed);
+  if (keys.down) move(g, 0, speed);
+  if (keys.left) move(g, -speed, 0);
+  if (keys.right) move(g, speed, 0);
   if (wasKeyPressed('interact')) interact(g);
   if (wasKeyPressed('action')) interact(g);
 }
@@ -102,19 +114,37 @@ function flattenFrame() {
   ctx.putImageData(img, 0, 0);
 }
 
-let last = 0;
-function frame(ts) {
-  const dt = Math.min((ts - last) / 1000, 0.05);
-  last = ts;
-  screenInput();
-  if (g.screen === 'play') playInput();
-  updateGame(g, dt);
+// Headless self-test: drive a whole order with synthetic keyboard events, then report.
+if (testMode) {
+  Audio.setMuted(true);
+  const result = runSelfTest(g);
+  result.errors = errors.slice();
+  const ok = result.ok && errors.length === 0;
+  const pre = document.createElement('pre');
+  pre.id = 'testResult';
+  pre.textContent = JSON.stringify({ ok, steps: result.steps, errors: result.errors });
+  document.body.appendChild(pre);
+  document.title = ok ? 'SELFTEST PASS' : 'SELFTEST FAIL';
   render();
   if (shot > 0) flattenFrame();
-  consumeKeys();
+  window.__lanternTide = g;
+} else if (shot > 0) {
+  // Frozen capture: render one real frame and report any error through the title.
+  try { render(); flattenFrame(); } catch (e) { errors.push(String(e && e.message || e)); }
+  document.title = errors.length ? 'SHOT FAIL' : 'SHOT OK';
+  window.__lanternTide = g;
+} else {
+  let last = 0;
+  function frame(ts) {
+    const dt = Math.min((ts - last) / 1000, 0.05);
+    last = ts;
+    screenInput();
+    if (g.screen === 'play') playInput(dt);
+    updateGame(g, dt);
+    render();
+    consumeKeys();
+    requestAnimationFrame(frame);
+  }
   requestAnimationFrame(frame);
+  window.__lanternTide = g;
 }
-requestAnimationFrame(frame);
-
-// Expose the frozen state so the headless test can inspect a real render.
-window.__lanternTide = g;

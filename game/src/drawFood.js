@@ -145,7 +145,7 @@ function nori(ctx, r, main, edge) {
   }
 }
 
-export function drawPlate(ctx, x, y, contents, w = 120) {
+export function drawPlate(ctx, x, y, contents, w = 120, ghosts = null) {
   ctx.fillStyle = '#e9e1d1';
   ctx.beginPath(); ctx.ellipse(x, y, w / 2, w / 5, 0, 0, Math.PI * 2); ctx.fill();
   ctx.strokeStyle = '#bfb6a4';
@@ -154,6 +154,18 @@ export function drawPlate(ctx, x, y, contents, w = 120) {
   ctx.strokeStyle = '#d6cdbb';
   ctx.lineWidth = 2;
   ctx.beginPath(); ctx.ellipse(x, y, w * 0.36, w * 0.14, 0, 0, Math.PI * 2); ctx.stroke();
+  // Ghosted missing parts of a half-built dish.
+  if (ghosts && ghosts.length) {
+    ctx.save();
+    ctx.globalAlpha = 0.4;
+    const ggap = Math.min(52, (w * 0.8) / (contents.length + ghosts.length));
+    const gstart = x - ((contents.length + ghosts.length - 1) * ggap) / 2 + contents.length * ggap;
+    ghosts.forEach((it, i) => {
+      ctx.setLineDash([5, 4]);
+      drawFoodItem(ctx, gstart + i * ggap, y - 6, it.ing, it.state, 40);
+    });
+    ctx.restore();
+  }
   if (!contents || !contents.length) return;
   const gap = Math.min(52, (w * 0.8) / contents.length);
   const startX = x - ((contents.length - 1) * gap) / 2;

@@ -1,12 +1,14 @@
-// player.js - the cook's position, walk-to-target and carried ingredient.
+// player.js - the cook's position, a queue of walk waypoints (from pathing.js)
+// and the single ingredient being carried.
 import * as Audio from './audio.js';
 
-export const PLAYER_SPEED = 320;
+export const PLAYER_SPEED = 340;
 
 export class Player {
   constructor(x, y) {
     this.x = x;
     this.y = y;
+    this.path = [];
     this.walkTo = null;
     this.carrying = null;
     this.facing = 1;
@@ -15,7 +17,10 @@ export class Player {
 
   update(dt) {
     this.bobTime += dt * 9;
-    if (!this.walkTo) return;
+    if (!this.walkTo) {
+      if (this.path.length) this.walkTo = this.path.shift();
+      else return;
+    }
     const dx = this.walkTo.x - this.x;
     const dy = this.walkTo.y - this.y;
     const dist = Math.hypot(dx, dy);
@@ -23,6 +28,7 @@ export class Player {
       this.x = this.walkTo.x;
       this.y = this.walkTo.y;
       this.walkTo = null;
+      if (this.path.length) this.walkTo = this.path.shift();
       return;
     }
     const step = Math.min(PLAYER_SPEED * dt, dist);
@@ -31,12 +37,23 @@ export class Player {
     if (Math.abs(dx) > 2) this.facing = dx > 0 ? 1 : -1;
   }
 
+  setPath(points) {
+    this.path = points.slice();
+    this.walkTo = this.path.length ? this.path.shift() : null;
+  }
+
   goTo(point) {
+    this.path = [];
     this.walkTo = { x: point.x, y: point.y };
   }
 
+  stop() {
+    this.path = [];
+    this.walkTo = null;
+  }
+
   isMoving() {
-    return this.walkTo !== null;
+    return this.walkTo !== null || this.path.length > 0;
   }
 
   pickup(item) {
@@ -60,11 +77,6 @@ export class Player {
     return item;
   }
 
-  getX() {
-    return this.x;
-  }
-
-  getY() {
-    return this.y;
-  }
+  getX() { return this.x; }
+  getY() { return this.y; }
 }

@@ -1,8 +1,7 @@
-// drawTickets.js - four large paper order tickets along the top, with dish pictures.
-import { TICKETS } from './layout.js';
+// drawTickets.js - four large paper order tickets along the top. Each ticket has its
+// own name row, dish picture, ingredient icons with a state glyph, patience bar and price.
+import { TICKETS, TICKET_INNER } from './layout.js';
 import { drawFoodItem } from './drawFood.js';
-
-const STATE_ICON = { raw: '', chopped: 'CH', fried: 'FR', steamed: 'ST', burned: 'BU' };
 
 function rrect(ctx, x, y, w, h, r) {
   ctx.beginPath();
@@ -14,26 +13,58 @@ function rrect(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
+function patienceColor(frac) {
+  if (frac > 0.66) return '#2fb457';
+  if (frac > 0.4) return '#e0c020';
+  if (frac > 0.2) return '#e07a20';
+  return '#d83a3a';
+}
+
+// A tiny state glyph: knife (chopped), flame (fried), steam (steamed), dot (raw), X (burned).
+function stateIcon(ctx, x, y, state) {
+  ctx.save();
+  ctx.translate(x, y);
+  if (state === 'chopped') {
+    ctx.fillStyle = '#cfd6de';
+    ctx.beginPath(); ctx.moveTo(-7, 3); ctx.lineTo(5, -5); ctx.lineTo(7, -2); ctx.lineTo(-5, 6); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = '#6b4422'; ctx.fillRect(-8, 3, 5, 4);
+  } else if (state === 'fried') {
+    ctx.fillStyle = '#ff8a20';
+    ctx.beginPath(); ctx.moveTo(0, -8); ctx.quadraticCurveTo(7, -1, 3, 6); ctx.quadraticCurveTo(0, 8, -3, 6); ctx.quadraticCurveTo(-7, -1, 0, -8); ctx.fill();
+    ctx.fillStyle = '#ffd24a'; ctx.beginPath(); ctx.arc(0, 2, 2.4, 0, Math.PI * 2); ctx.fill();
+  } else if (state === 'steamed') {
+    ctx.strokeStyle = '#b8c8d8'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+    for (const dx of [-4, 0, 4]) {
+      ctx.beginPath(); ctx.moveTo(dx, 6);
+      ctx.quadraticCurveTo(dx + 3, 1, dx, -3);
+      ctx.quadraticCurveTo(dx - 3, -6, dx, -8);
+      ctx.stroke();
+    }
+    ctx.lineCap = 'butt';
+  } else if (state === 'burned') {
+    ctx.strokeStyle = '#3a2a1a'; ctx.lineWidth = 3;
+    ctx.beginPath(); ctx.moveTo(-5, -5); ctx.lineTo(5, 5); ctx.moveTo(5, -5); ctx.lineTo(-5, 5); ctx.stroke();
+  } else {
+    ctx.fillStyle = '#8a7048'; ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.restore();
+}
+
 export function drawTickets(ctx, state) {
   const live = (state.orders || []).filter((o) => !o.served && !o.failed);
   TICKETS.forEach((box, i) => ticket(ctx, box, live[i] || null));
 }
 
 function ticket(ctx, b, order) {
+  const I = TICKET_INNER;
   ctx.save();
-  // Paper
   rrect(ctx, b.x, b.y, b.w, b.h, 8);
   ctx.fillStyle = 'rgba(0,0,0,0.4)';
   ctx.fill();
   rrect(ctx, b.x, b.y, b.w, b.h, 8);
   const g = ctx.createLinearGradient(b.x, b.y, b.x, b.y + b.h);
-  if (order) {
-    g.addColorStop(0, '#fdf3d8');
-    g.addColorStop(1, '#e6d3a8');
-  } else {
-    g.addColorStop(0, '#4a4038');
-    g.addColorStop(1, '#332c26');
-  }
+  if (order) { g.addColorStop(0, '#fdf3d8'); g.addColorStop(1, '#e6d3a8'); }
+  else { g.addColorStop(0, '#4a4038'); g.addColorStop(1, '#332c26'); }
   ctx.fillStyle = g;
   ctx.fill();
   ctx.lineWidth = 3;
@@ -52,53 +83,47 @@ function ticket(ctx, b, order) {
 
   const r = order.recipe;
   const frac = Math.max(0, order.patience / order.maxPatience);
-  const bar = frac > 0.5 ? '#2fb457' : frac > 0.25 ? '#e0a020' : '#d83a3a';
+  const bar = patienceColor(frac);
 
-  // Dish picture
-  const dishX = b.x + 52;
-  const dishY = b.y + b.h / 2 - 4;
-  ctx.fillStyle = '#efe6cf';
-  ctx.beginPath(); ctx.ellipse(dishX, dishY, 44, 20, 0, 0, Math.PI * 2); ctx.fill();
-  ctx.strokeStyle = '#c9bb9a';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-  const step = r.steps[0];
-  drawFoodItem(ctx, dishX, dishY - 4, step.ing, step.state, 52);
-  if (r.steps[1]) drawFoodItem(ctx, dishX + 24, dishY + 2, r.steps[1].ing, r.steps[1].state, 40);
-
-  // Name
+  // Name on its own row, condensed to fit if long.
   ctx.fillStyle = '#3a2412';
-  ctx.font = 'bold 19px sans-serif';
+  ctx.font = 'bold 18px sans-serif';
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.fillText(r.name, b.x + 104, b.y + 10);
+  ctx.fillText(r.name, b.x + I.name.x, b.y + I.name.y, I.name.w);
 
-  // Required ingredients with state icons
+  // Dish picture
+  const dx = b.x + I.dish.cx, dy = b.y + I.dish.cy;
+  ctx.fillStyle = '#efe6cf';
+  ctx.beginPath(); ctx.ellipse(dx, dy, I.dish.rx, I.dish.ry, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.strokeStyle = '#c9bb9a'; ctx.lineWidth = 2; ctx.stroke();
+  r.steps.slice(0, 3).forEach((s, j) => {
+    const ox = (j - (Math.min(r.steps.length, 3) - 1) / 2) * 20;
+    drawFoodItem(ctx, dx + ox, dy - 3, s.ing, s.state, 26);
+  });
+
+  // Ingredient icons with state glyphs
   r.steps.forEach((s, j) => {
-    const ix = b.x + 116 + j * 62;
-    const iy = b.y + 54;
-    drawFoodItem(ctx, ix, iy, s.ing, s.state, 34);
-    ctx.fillStyle = '#5a4630';
-    ctx.font = 'bold 15px sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'top';
-    ctx.fillText(STATE_ICON[s.state] || '', ix, iy + 18);
+    const ix = b.x + I.icons.x + j * I.icons.step;
+    const iy = b.y + I.icons.y;
+    drawFoodItem(ctx, ix, iy, s.ing, s.state, I.icons.size);
+    stateIcon(ctx, ix, b.y + I.icons.stateY, s.state);
   });
 
   // Patience bar
   ctx.fillStyle = 'rgba(60,44,26,0.35)';
-  ctx.fillRect(b.x + 12, b.y + b.h - 16, b.w - 24, 9);
+  ctx.fillRect(b.x + I.bar.x, b.y + I.bar.y, I.bar.w, I.bar.h);
   ctx.fillStyle = bar;
-  ctx.fillRect(b.x + 12, b.y + b.h - 16, (b.w - 24) * frac, 9);
+  ctx.fillRect(b.x + I.bar.x, b.y + I.bar.y, I.bar.w * frac, I.bar.h);
 
-  // Points
-  ctx.fillStyle = 'rgba(58,36,18,0.85)';
-  rrect(ctx, b.x + b.w - 62, b.y + 8, 54, 24, 6);
+  // Price, bottom right
+  rrect(ctx, b.x + I.price.x, b.y + I.price.y, I.price.w, I.price.h, 6);
+  ctx.fillStyle = 'rgba(58,36,18,0.9)';
   ctx.fill();
   ctx.fillStyle = '#ffd76a';
-  ctx.font = 'bold 17px sans-serif';
+  ctx.font = 'bold 16px sans-serif';
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
-  ctx.fillText('+' + r.points, b.x + b.w - 35, b.y + 21);
+  ctx.fillText('+' + r.points, b.x + I.price.x + I.price.w / 2, b.y + I.price.y + I.price.h / 2 + 1);
   ctx.restore();
 }

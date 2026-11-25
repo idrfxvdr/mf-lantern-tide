@@ -15,7 +15,7 @@ export function drawStations(ctx, state) {
   ctx.lineWidth = 4;
   ctx.setLineDash([10, 8]);
   ctx.beginPath();
-  ctx.arc(x, near.y, (near.r || 46) + 20, 0, Math.PI * 2);
+  ctx.arc(x, near.y, (near.r || 46) + 14, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
 }
